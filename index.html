@@ -468,11 +468,13 @@
         font-weight: 700;
       }
       .teamsGrid {
-        display: grid;
-        gap: 12px;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        margin-top: 12px;
-      }
+  /* Always stack team cards vertically for both Roy and Savanah */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
       .teamCard {
         border: 1px solid var(--border);
         border-radius: 12px;
@@ -626,7 +628,8 @@
                     <option>Argentina</option>
                   </select>
                 </div>
-                <div class="field">
+                <div class="field hidden">
+
                   <label for="fNationality">Nationality</label>
                   <select id="fNationality">
                     <option value="">Any</option>
@@ -2072,16 +2075,7 @@
         body.appendChild(kv("Ethnicity", ethnicity));
         body.appendChild(kv("Sport", sport));
 
-        const danceWrap = document.createElement("div");
-        const l = document.createElement("div");
-        l.className = "label";
-        l.textContent = "Dance experience";
-        const v = document.createElement("div");
-        v.className = "kv";
-        v.appendChild(yesNoChip(dance));
-        danceWrap.appendChild(l);
-        danceWrap.appendChild(v);
-        body.appendChild(danceWrap);
+      
 
         body.appendChild(
           kv(
@@ -2467,7 +2461,7 @@
         addKV("Age", row.age ?? row.Age ?? "");
         addKV("Ethnicity", row.ethnicity ?? row.Ethnicity ?? "");
         addKV("Sport", row.sport ?? row.Sport ?? "");
-        addKV("Dance", (row._dance || getDance(row) || "").toUpperCase());
+
         addKV(
           "Languages",
           getLangs(row)
