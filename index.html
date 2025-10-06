@@ -597,39 +597,39 @@
   </head>
   <body>
     <script>
-      /* SIMPLE SESSION PASSWORD — paste immediately after the <body> tag */
-      (function () {
-        try {
-          if (sessionStorage.getItem('__casting_authed') === '1') return;
-          const PASSWORD = 'Joy'; // <- the password
-          let tries = 0;
-          while (true) {
-            const val = prompt('Enter password to view this site:');
-            // If user cancels (null) — lock the page
-            if (val === null) {
-              // Clear page and stop further execution
-              document.documentElement.innerHTML = '<div style="font-family:system-ui,Arial,sans-serif;padding:40px;text-align:center;"><h2>Access denied</h2></div>';
-              throw new Error('Access denied');
-            }
-            if (val === PASSWORD) {
-              sessionStorage.setItem('__casting_authed', '1');
-              break;
-            }
-            tries++;
-            if (tries >= 5) {
-              alert('Too many incorrect attempts — access denied.');
-              document.documentElement.innerHTML = '<div style="font-family:system-ui,Arial,sans-serif;padding:40px;text-align:center;"><h2>Access denied</h2></div>';
-              throw new Error('Access denied');
-            }
-            alert('Incorrect password — try again.');
-          }
-        } catch (e) {
-          // stop execution if denied
-          throw e;
-        }
-      })();
-      </script>
-      
+/* SIMPLE SESSION PASSWORD — paste immediately after the <body> tag */
+(function () {
+  try {
+    if (sessionStorage.getItem('__casting_authed') === '1') return;
+    const PASSWORD = 'Joy'; // <- the password
+    let tries = 0;
+    while (true) {
+      const val = prompt('Enter password to view this site:');
+      // If user cancels (null) — lock the page
+      if (val === null) {
+        // Clear page and stop further execution
+        document.documentElement.innerHTML = '<div style="font-family:system-ui,Arial,sans-serif;padding:40px;text-align:center;"><h2>Access denied</h2></div>';
+        throw new Error('Access denied');
+      }
+      if (val === PASSWORD) {
+        sessionStorage.setItem('__casting_authed', '1');
+        break;
+      }
+      tries++;
+      if (tries >= 5) {
+        alert('Too many incorrect attempts — access denied.');
+        document.documentElement.innerHTML = '<div style="font-family:system-ui,Arial,sans-serif;padding:40px;text-align:center;"><h2>Access denied</h2></div>';
+        throw new Error('Access denied');
+      }
+      alert('Incorrect password — try again.');
+    }
+  } catch (e) {
+    // stop execution if denied
+    throw e;
+  }
+})();
+</script>
+
     <header>
       <div class="nav">
         <div class="brand"><span class="dot"></span> Roy's Casting Minion</div>
