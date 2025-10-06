@@ -2382,15 +2382,68 @@
         teamsGrid.appendChild(frag);
       }
 
-      async function createTeam() {
-        const name = (teamNameInput.value || "").trim();
-        const color = (teamColorInput.value || "").trim() || "#cccccc";
-        if (!name) {
-          createTeamMsg.textContent = "Please enter a team name.";
-          createTeamMsg.className = "notice warn";
-          createTeamMsg.classList.remove("hidden");
-          return;
-        }
+     async function createTeam() {
+  const name = (teamNameInput.value || "").trim();
+  const color = (teamColorInput.value || "").trim() || "#cccccc";
+  if (!name) {
+    createTeamMsg.textContent = "Please enter a team name.";
+    createTeamMsg.className = "notice warn";
+    createTeamMsg.classList.remove("hidden");
+    return;
+  }
+
+  // Show loading message
+  setLoaderText(CURRENT_VIEWER === "Roy" ? "Patience Roy..." : "Info loading :)");
+  showLoader();
+
+  try {
+    const resp = await apiPost({
+      op: "createTeam",
+      name,
+      color,
+      viewer: CURRENT_VIEWER,
+    });
+    createTeamMsg.textContent = `Team "${resp.team.name}" created.`;
+    createTeamMsg.className = "notice ok";
+    createTeamMsg.classList.remove("hidden");
+    teamNameInput.value = "";
+    await refreshTeams();
+    refreshTeamsUI();
+    tabManage.click();
+  } catch (e) {
+    createTeamMsg.textContent = "Create failed: " + e.message;
+    createTeamMsg.className = "notice err";
+    createTeamMsg.classList.remove("hidden");
+  } finally {
+    hideLoader();
+  }
+}
+
+async function renameTeam(teamId, newName) {
+  setLoaderText(CURRENT_VIEWER === "Roy" ? "Patience Roy..." : "Info loading :)");
+  showLoader();
+  try {
+    await apiPost({ op: "renameTeam", teamId, name: newName });
+    await refreshTeams();
+    refreshTeamsUI();
+  } finally {
+    hideLoader();
+  }
+}
+
+async function deleteTeam(teamId, name) {
+  if (!confirm(`Delete team "${name}"?`)) return;
+  setLoaderText(CURRENT_VIEWER === "Roy" ? "Patience Roy..." : "Info loading :)");
+  showLoader();
+  try {
+    await apiPost({ op: "deleteTeam", teamId });
+    await refreshTeams();
+    refreshTeamsUI();
+  } finally {
+    hideLoader();
+  }
+}
+
         try {
           // Owner will be set server-side using CURRENT_VIEWER we send here
           const resp = await apiPost({
