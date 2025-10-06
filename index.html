@@ -596,6 +596,40 @@
     </style>
   </head>
   <body>
+    <script>
+      /* SIMPLE SESSION PASSWORD — paste immediately after the <body> tag */
+      (function () {
+        try {
+          if (sessionStorage.getItem('__casting_authed') === '1') return;
+          const PASSWORD = 'Joy'; // <- the password
+          let tries = 0;
+          while (true) {
+            const val = prompt('Enter password to view this site:');
+            // If user cancels (null) — lock the page
+            if (val === null) {
+              // Clear page and stop further execution
+              document.documentElement.innerHTML = '<div style="font-family:system-ui,Arial,sans-serif;padding:40px;text-align:center;"><h2>Access denied</h2></div>';
+              throw new Error('Access denied');
+            }
+            if (val === PASSWORD) {
+              sessionStorage.setItem('__casting_authed', '1');
+              break;
+            }
+            tries++;
+            if (tries >= 5) {
+              alert('Too many incorrect attempts — access denied.');
+              document.documentElement.innerHTML = '<div style="font-family:system-ui,Arial,sans-serif;padding:40px;text-align:center;"><h2>Access denied</h2></div>';
+              throw new Error('Access denied');
+            }
+            alert('Incorrect password — try again.');
+          }
+        } catch (e) {
+          // stop execution if denied
+          throw e;
+        }
+      })();
+      </script>
+      
     <header>
       <div class="nav">
         <div class="brand"><span class="dot"></span> Roy's Casting Minion</div>
@@ -2120,76 +2154,79 @@
 
   let pop = null;
   function openNote() {
-    if (pop) return;
-    pop = document.createElement("div");
-    pop.style.position = "absolute";
-    pop.style.right = "10px";
-    pop.style.bottom = "56px";
-    pop.style.width = "min(280px, 90vw)";
-    pop.style.background = "#fff";
-    pop.style.border = "1px solid var(--border)";
-    pop.style.borderRadius = "12px";
-    pop.style.padding = "10px";
-    pop.style.boxShadow = "0 12px 24px rgba(0,0,0,.12)";
-    pop.style.display = "grid";
-    pop.style.gap = "8px";
-    pop.style.zIndex = "20";
-    pop.innerHTML = `
-      <div class="label">Notes for ${CURRENT_VIEWER}</div>
-      <textarea style="width:100%;min-height:90px;resize:vertical;border:1px solid var(--border);border-radius:8px;padding:8px;font-size:14px;">${existingNote ? String(existingNote).replace(/</g,"&lt;") : ""}</textarea>
-      <div style="display:flex;justify-content:flex-end;gap:8px">
-        <button type="button" class="btn" data-act="close">Close</button>
-        <button type="button" class="btn primary" data-act="save">Save</button>
-      </div>
-    `;
-    wrap.appendChild(pop);
+  if (pop) return;
 
-    // --- simple refresh to load latest note from Sheets ---
-(async () => {
-  try {
-    const res = await apiPost({ op: "getNote", rowIndex, viewer: CURRENT_VIEWER });
-    if (res && res.note !== undefined) {
-      const ta = pop.querySelector("textarea");
-      if (ta) ta.value = String(res.note);
-      if (CURRENT_VIEWER === "Savanah") row.P = res.note; else row.O = res.note;
-    }
-  } catch (e) {
-    console.warn("getNote refresh failed:", e);
-  }
-})();
+  pop = document.createElement("div");
+  pop.style.position = "absolute";
+  pop.style.right = "10px";
+  pop.style.bottom = "56px";
+  pop.style.width = "min(280px, 90vw)";
+  pop.style.background = "#fff";
+  pop.style.border = "1px solid var(--border)";
+  pop.style.borderRadius = "12px";
+  pop.style.padding = "10px";
+  pop.style.boxShadow = "0 12px 24px rgba(0,0,0,.12)";
+  pop.style.display = "grid";
+  pop.style.gap = "8px";
+  pop.style.zIndex = "20";
+  pop.innerHTML = `
+    <div class="label">Notes for ${CURRENT_VIEWER}</div>
+    <textarea style="width:100%;min-height:90px;resize:vertical;border:1px solid var(--border);border-radius:8px;padding:8px;font-size:14px;"></textarea>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button type="button" class="btn" data-act="close">Close</button>
+      <button type="button" class="btn primary" data-act="save">Save</button>
+    </div>
+  `;
+  wrap.appendChild(pop);
 
-    // Refresh the textarea with the latest value from Sheets (non-blocking)
-(async () => {
-  try {
-    const res = await apiPost({ op: "getNote", rowIndex, viewer: CURRENT_VIEWER });
-    if (res && res.note !== undefined) {
-      const ta = pop.querySelector("textarea");
-      if (ta) ta.value = String(res.note);
-      // keep local cache in sync so next open shows this
-      if (CURRENT_VIEWER === "Savanah") row.P = res.note; else row.O = res.note;
-    }
-  } catch (e) {
-    // ignore errors; the local value is already shown
-    console.warn("getNote refresh failed:", e);
-  }
-})();
+  const ta = pop.querySelector("textarea");
 
+  // Show whatever is stored locally first
+  const existingNote =
+    (CURRENT_VIEWER === "Savanah"
+      ? (row.P ?? row.p ?? row.savNote ?? "")
+      : (row.O ?? row.o ?? row.royNote ?? "")) || "";
+  ta.value = String(existingNote);
 
-    pop.querySelector('[data-act="close"]').addEventListener("click", closeNote);
-    pop.querySelector('[data-act="save"]').addEventListener("click", async () => {
-      const val = pop.querySelector("textarea").value || "";
-      try {
-        // server chooses column O (Roy) or P (Savanah) based on CURRENT_VIEWER
-        const payload = { op: "saveNote", rowIndex, viewer: CURRENT_VIEWER, note: val };
-        await apiPost(payload);
-        showNotice("Note saved.", "ok");
-        if (CURRENT_VIEWER === "Savanah") row.P = val; else row.O = val;
-        closeNote();
-      } catch (e) {
-        showNotice("Save note failed: " + e.message, "err");
+  // Prevent the document click listener from closing while using the popup
+  pop.addEventListener("mousedown", (e) => e.stopPropagation());
+  pop.addEventListener("click", (e) => e.stopPropagation());
+
+  // Mark when user starts typing, so network refresh won't overwrite
+  let dirty = false;
+  ta.addEventListener("input", () => { dirty = true; });
+
+  // Fetch latest note from Sheets once; don't overwrite if user typed
+  (async () => {
+    try {
+      const res = await apiPost({ op: "getNote", rowIndex, viewer: CURRENT_VIEWER });
+      if (!dirty && res && res.note !== undefined) {
+        ta.value = String(res.note);
+        if (CURRENT_VIEWER === "Savanah") row.P = res.note; else row.O = res.note;
       }
-    });
-  }
+    } catch (e) {
+      console.warn("getNote refresh failed:", e);
+    }
+  })();
+
+  // Button actions
+  pop.querySelector('[data-act="close"]').addEventListener("click", closeNote);
+
+  pop.querySelector('[data-act="save"]').addEventListener("click", async (e) => {
+    e.stopPropagation();
+    const val = ta.value || "";
+    try {
+      await apiPost({ op: "saveNote", rowIndex, viewer: CURRENT_VIEWER, note: val });
+      showNotice("Note saved.", "ok");
+      if (CURRENT_VIEWER === "Savanah") row.P = val; else row.O = val;
+      closeNote();
+    } catch (e) {
+      showNotice("Save note failed: " + e.message, "err");
+    }
+  });
+}
+
+
   function closeNote() {
     if (!pop) return;
     pop.remove();
@@ -2200,10 +2237,16 @@
     if (pop) closeNote(); else openNote();
   });
   // close when clicking outside this card
-  document.addEventListener("click", (e) => {
-    if (!pop) return;
-    if (!wrap.contains(e.target)) closeNote();
-  }, { capture: true });
+ // Close notes only if the click is truly outside both the card and the popover
+document.addEventListener("click", (e) => {
+  if (!pop) return;
+  const clickedInsidePopover = pop.contains(e.target);
+  const clickedInsideCard = wrap.contains(e.target);
+  if (!clickedInsidePopover && !clickedInsideCard) {
+    closeNote();
+  }
+}, { capture: true });
+
 
   card.appendChild(body);
   wrap.appendChild(card);
