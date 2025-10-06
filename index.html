@@ -1,0 +1,2831 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Casting Dashboard</title>
+    <style>
+      :root {
+        --brand: #e2231a;
+        --ink: #222;
+        --muted: #666;
+        --bg: #fafafa;
+        --card: #fff;
+        --border: #e6e6e6;
+        --ok: #168821;
+        --err: #c81e1e;
+        --yes-bg: #e9f7ee;
+        --yes-border: #168821;
+        --no-bg: #ffecec;
+        --no-border: #c81e1e;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
+          Arial, sans-serif;
+        color: var(--ink);
+        background: var(--bg);
+      }
+      header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background: var(--card);
+        border-bottom: 1px solid var(--border);
+        z-index: 999;
+      }
+
+      /* Add top spacing so content doesn’t hide behind the fixed header */
+      main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 16px 48px;
+        padding-top: 140px; /* pushes content down so search bar sits just below header */
+      }
+
+      .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 12px 16px;
+        gap: 12px;
+      }
+      .brand {
+        font-weight: 800;
+        letter-spacing: 0.3px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .brand .dot {
+        width: 10px;
+        height: 10px;
+        background: var(--brand);
+        border-radius: 999px;
+        display: inline-block;
+      }
+      .menu {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .btn {
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        background: var(--card);
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: transform 0.02s ease, background 0.15s ease,
+          border-color 0.15s ease;
+      }
+      .btn:hover {
+        border-color: #d9d9d9;
+      }
+      .btn:active {
+        transform: translateY(1px);
+      }
+      .btn.primary {
+        border-color: var(--brand);
+        background: var(--brand);
+        color: #fff;
+      }
+      .btn.ghost {
+        background: transparent;
+      }
+      main {
+        max-width: 1200px;
+        margin: 24px auto;
+        padding: 0 16px 48px;
+      }
+      .intro {
+        display: grid;
+        gap: 14px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+      }
+      .intro h1 {
+        margin: 0;
+        font-size: 22px;
+      }
+      .status {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .toolbar {
+        position: fixed !important;
+        top: 52px !important; /* this sets it snug under the top menu */
+        left: 0;
+        right: 0;
+        width: 100%;
+        background: #fff;
+        border-bottom: 1px solid #ccc;
+        padding: 8px 16px;
+        z-index: 99999; /* ensures it stays above everything */
+      }
+
+      main {
+        margin-top: 125px !important; /* pushes talent cards down so they don’t hide behind the toolbar */
+      }
+
+      main {
+        margin-top: 130px; /* adjust if your cards overlap */
+      }
+
+      main {
+        margin-top: calc(
+          var(--header-h) + 70px
+        ); /* pushes talent cards below search bar */
+      }
+
+      main {
+        margin-top: 118px; /* pushes content down so it’s not hidden */
+      }
+
+      main {
+        margin-top: 105px; /* keeps talent cards below it */
+      }
+
+      main {
+        margin-top: 115px; /* pushes profiles below the fixed toolbar */
+      }
+
+      main {
+        margin-top: 130px; /* keeps content pushed below toolbar */
+      }
+
+      main {
+        margin-top: 150px; /* pushes the talent cards down so the toolbar doesn’t overlap them */
+      }
+
+      .search {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1 1 300px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 8px 10px;
+      }
+      .search input {
+        border: none;
+        outline: none;
+        flex: 1;
+        font-size: 14px;
+        background: transparent;
+      }
+      .pill {
+        font-size: 12px;
+        color: var(--muted);
+        background: #f3f3f3;
+        border: 1px solid var(--border);
+        padding: 6px 10px;
+        border-radius: 999px;
+      }
+      .cards {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        display: grid;
+        grid-template-rows: auto 1fr;
+      }
+      .card img {
+        width: 100%;
+        height: 280px;
+        object-fit: cover;
+        object-position: center;
+        display: block;
+        background: #efefef;
+      }
+      .card-body {
+        padding: 12px;
+        display: grid;
+        gap: 6px;
+      }
+      .name-row {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .name {
+        font-weight: 800;
+        font-size: 16px;
+        line-height: 1.2;
+      }
+      .name a {
+        color: var(--brand);
+        text-decoration: none;
+      }
+      .name a:hover {
+        text-decoration: underline;
+      }
+      .label {
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.2px;
+        text-transform: uppercase;
+      }
+      .kv {
+        font-size: 14px;
+      }
+      .chipYesNo {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        font-size: 12px;
+      }
+      .chipYes {
+        background: var(--yes-bg);
+        border-color: var(--yes-border);
+      }
+      .chipNo {
+        background: var(--no-bg);
+        border-color: var(--no-border);
+      }
+      .empty {
+        text-align: center;
+        color: var(--muted);
+        padding: 24px 0;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .notice {
+        font-size: 13px;
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #fffdf5;
+      }
+      .notice.ok {
+        background: #f4fff6;
+        border-color: #d7f0db;
+        color: var(--ok);
+      }
+      .notice.warn {
+        background: #fff9ef;
+        border-color: #f2e1c8;
+        color: #b25a00;
+      }
+      .notice.err {
+        background: #fff7f7;
+        border-color: #f1cccc;
+        color: var(--err);
+      }
+      footer {
+        margin-top: 28px;
+        font-size: 12px;
+        color: var(--muted);
+        text-align: center;
+      }
+      .loader {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: rgba(255, 255, 255, 0.9);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .loader.show {
+        display: flex;
+      }
+      .wheel {
+        width: 120px;
+        height: 120px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: #eee;
+        display: grid;
+        place-items: center;
+      }
+      .wheel img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      #royImg {
+        transform-origin: 50% 85%;
+        animation: royShake 1.4s ease-in-out infinite;
+      }
+      @keyframes royShake {
+        0% {
+          transform: translateY(0) rotate(-6deg) scale(1.01);
+        }
+        25% {
+          transform: translateY(-1px) rotate(0) scale(1.015);
+        }
+        50% {
+          transform: translateY(0) rotate(6deg) scale(1.01);
+        }
+        75% {
+          transform: translateY(-1px) rotate(0) scale(1.015);
+        }
+        100% {
+          transform: translateY(0) rotate(-6deg) scale(1.01);
+        }
+      }
+      .badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: #0009;
+        color: #fff;
+      }
+      .cardWrap {
+        position: relative;
+      }
+      .btn.yes {
+        border-color: var(--yes-border);
+        background: #fff;
+      }
+      .btn.no {
+        border-color: var(--no-border);
+        background: #fff;
+      }
+      .btn.yes.selected {
+        background: var(--yes-bg);
+        border-color: var(--yes-border);
+        box-shadow: 0 0 0 3px rgba(22, 136, 33, 0.2);
+        font-weight: 700;
+      }
+      .btn.no.selected {
+        background: var(--no-bg);
+        border-color: var(--no-border);
+        box-shadow: 0 0 0 3px rgba(200, 30, 30, 0.2);
+        font-weight: 700;
+      }
+      .voteRow {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      .filtersWrap {
+        position: relative;
+      }
+      .filtersPanel {
+        position: absolute;
+        top: 110%;
+        right: 0;
+        width: min(820px, 92vw);
+        max-height: 70vh;
+        overflow: auto;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+        display: none;
+      }
+      .filtersPanel.show {
+        display: grid;
+        gap: 12px;
+      }
+      .filtersGrid {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      }
+      .field {
+        display: grid;
+        gap: 6px;
+      }
+      .field label {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .field select,
+      .field input {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px 10px;
+        background: #fff;
+        font-size: 14px;
+      }
+      .filtersFooter {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .chip {
+        font-size: 12px;
+        padding: 4px 8px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: #f7f7f7;
+      }
+      .tabs {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .tabBtn {
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        background: #fff;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      .tabBtn.active {
+        background: #f6f6f6;
+        border-color: #dcdcdc;
+        font-weight: 700;
+      }
+      .teamsGrid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        margin-top: 12px;
+      }
+      .teamCard {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #fff;
+        padding: 12px;
+        display: grid;
+        gap: 10px;
+      }
+      .colorDot {
+        width: 14px;
+        height: 14px;
+        border-radius: 999px;
+        border: 1px solid #bbb;
+        display: inline-block;
+        vertical-align: middle;
+        margin-right: 6px;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .row.wrap {
+        flex-wrap: wrap;
+      }
+      .input {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 14px;
+      }
+      .list {
+        display: grid;
+        gap: 8px;
+        max-height: 260px;
+        overflow: auto;
+        border: 1px dashed #e5e5e5;
+        border-radius: 10px;
+        padding: 8px;
+      }
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.35);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+      }
+      .modal.show {
+        display: flex;
+      }
+      .modalCard {
+        width: min(480px, 92vw);
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        padding: 14px;
+        display: grid;
+        gap: 12px;
+      }
+      .teamPick {
+        display: grid;
+        gap: 8px;
+      }
+      .teamPick .item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+      }
+      .teamPick .item.selected {
+        outline: 3px solid rgba(50, 120, 255, 0.25);
+      }
+      .memberRow {
+        display: grid;
+        grid-template-columns: 40px 1fr auto;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 8px;
+        border: 1px dashed #eaeaea;
+        border-radius: 10px;
+        background: #fff;
+      }
+      .memberThumb {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        object-fit: cover;
+        background: #f0f0f0;
+        border: 1px solid var(--border);
+      }
+      .memberName {
+        font-size: 14px;
+      }
+      .viewerBtns .viewerBtn.active {
+        background: #f6f6f6;
+        border-color: #dcdcdc;
+        font-weight: 700;
+      }
+      .viewerWrap .pill {
+        user-select: none;
+      }
+      .profileCard {
+        display: grid;
+        gap: 8px;
+      }
+      .profileCard img {
+        width: 100%;
+        max-height: 300px;
+        object-fit: cover;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="nav">
+        <div class="brand"><span class="dot"></span> Roy's Casting Minion</div>
+        <div class="menu">
+          <div
+            class="viewerWrap"
+            style="display: flex; align-items: center; gap: 8px"
+          >
+            <span class="pill" id="viewerLabel">Viewing as:</span>
+            <div class="viewerBtns" role="group" aria-label="Viewer">
+              <button id="btnViewRoy" class="btn viewerBtn" type="button">
+                Roy
+              </button>
+              <button id="btnViewSav" class="btn viewerBtn" type="button">
+                Savanah
+              </button>
+            </div>
+          </div>
+
+          <div class="filtersWrap">
+            <button id="btnFilters" class="btn">Filters</button>
+            <div id="filtersPanel" class="filtersPanel" aria-label="Filters">
+              <div class="filtersGrid">
+                <div class="field">
+                  <label for="fCountry">Country</label>
+                  <select id="fCountry">
+                    <option value="">Any</option>
+                    <option>Uruguay</option>
+                    <option>Brazil</option>
+                    <option>Argentina</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="fNationality">Nationality</label>
+                  <select id="fNationality">
+                    <option value="">Any</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="fEth">Ethnicity</label>
+                  <select id="fEth">
+                    <option value="">Any</option>
+                    <option>Caucasian</option>
+                    <option>Black</option>
+                    <option>Asian</option>
+                    <option>Middle Eastern</option>
+                    <option>Brown</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="fSport">Sport</label>
+                  <select id="fSport">
+                    <option value="">Any</option>
+                    <option>American Football</option>
+                    <option>Soccer</option>
+                    <option>Softball</option>
+                    <option>Rugby/Tag Rugby</option>
+                    <option>Basketball</option>
+                    <option>Taekwondo</option>
+                    <option>Other Martial Arts</option>
+                    <option>Track and Field</option>
+                    <option>Tennis</option>
+                    <option>Gymnastics</option>
+                    <option>Skateboarding</option>
+                    <option>Swimming/diving</option>
+                    <option>Volleyball</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="fDance">Dance experience</label>
+                  <select id="fDance">
+                    <option value="">Any</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="fLang">Languages</label>
+                  <select id="fLang">
+                    <option value="">Any</option>
+                    <option value="english">English</option>
+                    <option value="portuguese">Portuguese</option>
+                    <option value="spanish">Spanish</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="fTeam">Team name</label>
+                  <select id="fTeam">
+                    <option value="">Any</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="fAgeMin">Age min</label>
+                  <input
+                    id="fAgeMin"
+                    type="number"
+                    min="0"
+                    placeholder="Min"
+                    class="input"
+                  />
+                </div>
+                <div class="field">
+                  <label for="fAgeMax">Age max</label>
+                  <input
+                    id="fAgeMax"
+                    type="number"
+                    min="0"
+                    placeholder="Max"
+                    class="input"
+                  />
+                </div>
+                <div class="field">
+                  <label for="fDate">Date added</label>
+                  <select id="fDate">
+                    <option value="">Any</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="fVote">Vote</label>
+                  <select id="fVote">
+                    <option value="">Any</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                    <option value="Unvoted">Unvoted</option>
+                  </select>
+                </div>
+              </div>
+              <div class="filtersFooter">
+                <div class="chips" id="activeChips"></div>
+                <div style="display: flex; gap: 8px">
+                  <button id="btnClearFilters" class="btn ghost" type="button">
+                    Clear
+                  </button>
+                  <button
+                    id="btnApplyFilters"
+                    class="btn primary"
+                    type="button"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button id="btnFullList" class="btn">Talent</button>
+          <button id="btnTeams" class="btn">Teams</button>
+          <button id="btnRefresh" class="btn">Refresh</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="intro" id="intro">
+        <h1>Ready to produce, Roy?</h1>
+        <div class="status">
+          Auto-loading the latest data from Google Sheets…
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap">
+          <button id="btnYes" class="btn primary">Reload</button>
+          <button id="btnTry" class="btn ghost">Test connection</button>
+        </div>
+        <div id="noticeBox" class="notice warn hidden"></div>
+        <div
+          id="rawBox"
+          class="notice hidden"
+          style="white-space: pre-wrap; max-height: 220px; overflow: auto"
+        ></div>
+      </section>
+
+      <div id="pageTalent" class="hidden">
+        <div class="toolbar sticky" style="top: 90px; z-index: 998">
+          <div class="search">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M21 21l-3.6-3.6M10.8 18a7.2 7.2 0 1 1 0-14.4 7.2 7.2 0 0 1 0 14.4Z"
+                stroke="#888"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <input
+              id="q"
+              type="search"
+              placeholder="Search by name, country, nationality, sport, ethnicity, language…"
+            />
+          </div>
+          <div id="statusLine" class="pill">Idle</div>
+        </div>
+        <div id="cards" class="cards"></div>
+        <div id="emptyMsg" class="empty hidden">No rows match.</div>
+      </div>
+
+      <div id="pageTeams" class="hidden">
+        <div class="tabs">
+          <button id="tabCreate" class="tabBtn active" type="button">
+            Create team
+          </button>
+          <button id="tabManage" class="tabBtn" type="button">
+            Manage teams
+          </button>
+        </div>
+        <section id="createTeamPane" class="intro" style="margin-top: 12px">
+          <div class="row wrap">
+            <input
+              id="teamName"
+              class="input"
+              placeholder="Team name (e.g., Blue Squad)"
+              style="flex: 1 1 260px"
+            />
+            <input
+              id="teamColor"
+              type="color"
+              class="input"
+              value="#3f82ff"
+              title="Pick a color"
+              style="width: 54px; padding: 4px"
+            />
+            <button id="btnCreateTeam" class="btn primary" type="button">
+              Create team
+            </button>
+          </div>
+          <div id="createTeamMsg" class="notice ok hidden"></div>
+        </section>
+        <section id="manageTeamPane" class="hidden">
+          <div id="teamsGrid" class="teamsGrid"></div>
+          <div id="noTeams" class="empty hidden">
+            No teams yet. Create one above.
+          </div>
+        </section>
+      </div>
+
+      <footer>© Casting dashboard</footer>
+    </main>
+
+    <div id="loader" class="loader" aria-live="polite" aria-busy="true">
+      <div class="wheel"><img id="royImg" alt="Loading…" /></div>
+      <div class="loader-text">info loading... patience roy</div>
+    </div>
+
+    <div
+      id="teamModal"
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Send to team"
+    >
+      <div class="modalCard">
+        <div style="font-weight: 700">Send to team</div>
+        <div id="modalBody"></div>
+        <div class="row" style="justify-content: flex-end">
+          <button
+            id="btnConfirmTeam"
+            class="btn primary"
+            type="button"
+            disabled
+          >
+            Confirm
+          </button>
+          <button id="btnCloseModal" class="btn" type="button">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      /* ========= CONFIG ========= */
+      const API_URL =
+        "https://script.google.com/macros/s/AKfycbztiiXdDCUyGCV7Dfr8M3V48Rnm72AO1TX1qHz7QPYrG78dXL8tWnJmoZnQlnwAiBZk7A/exec";
+      const ROY_LINK =
+        "https://drive.google.com/file/d/1zz6PR7_aXpVCfLZWjZisPorI7axxA9Dk/view?usp=sharing";
+      const SAV_LINK =
+        "https://drive.google.com/file/d/1QAmgCsbIkcLJYa586BXbL4jPq5_rAQvQ/view?usp=sharing";
+
+      /* ========= STATE ========= */
+      let ALL_ROWS = [];
+      let FILTERED = [];
+      let votes = {};
+      let TEAMS = []; // [{teamId,name,color,owner,memberCount}]
+      let PICK = { rowIndex: null, name: "", selectedTeamId: null };
+
+      // Viewer persists, but do not default to Roy until we check first-run
+      let CURRENT_VIEWER = (localStorage.getItem("viewer") || "").trim();
+      if (CURRENT_VIEWER !== "Roy" && CURRENT_VIEWER !== "Savanah") {
+        CURRENT_VIEWER = ""; // force chooser
+      }
+
+      // Filters
+      const filters = {
+        country: "",
+        nationality: "",
+        ethnicity: "",
+        sport: "",
+        dance: "",
+        language: "",
+        ageMin: "",
+        ageMax: "",
+        vote: "",
+        team: "",
+        date: "",
+      };
+
+      /* ========= ELEMENTS ========= */
+      const intro = document.getElementById("intro");
+      const pageTalent = document.getElementById("pageTalent");
+      const pageTeams = document.getElementById("pageTeams");
+      const cardsEl = document.getElementById("cards");
+      const emptyMsg = document.getElementById("emptyMsg");
+      const statusLine = document.getElementById("statusLine");
+      const qInput = document.getElementById("q");
+      const noticeBox = document.getElementById("noticeBox");
+      const rawBox = document.getElementById("rawBox");
+      const loader = document.getElementById("loader");
+      const royImg = document.getElementById("royImg");
+
+      const btnFilters = document.getElementById("btnFilters");
+      const filtersPanel = document.getElementById("filtersPanel");
+      const fCountry = document.getElementById("fCountry");
+      const fNationality = document.getElementById("fNationality");
+      const fEth = document.getElementById("fEth");
+      const fSport = document.getElementById("fSport");
+      const fDance = document.getElementById("fDance");
+      const fLang = document.getElementById("fLang");
+      const fAgeMin = document.getElementById("fAgeMin");
+      const fAgeMax = document.getElementById("fAgeMax");
+      const fVote = document.getElementById("fVote");
+      const fTeam = document.getElementById("fTeam");
+      const fDate = document.getElementById("fDate");
+
+      const btnApplyFilters = document.getElementById("btnApplyFilters");
+      const btnClearFilters = document.getElementById("btnClearFilters");
+      const chips = document.getElementById("activeChips");
+
+      const btnYesLoad = document.getElementById("btnYes");
+      const btnRefresh = document.getElementById("btnRefresh");
+      const btnFullList = document.getElementById("btnFullList");
+      const btnTeamsBtn = document.getElementById("btnTeams");
+      const btnTry = document.getElementById("btnTry");
+
+      const tabCreate = document.getElementById("tabCreate");
+      const tabManage = document.getElementById("tabManage");
+      const createTeamPane = document.getElementById("createTeamPane");
+      const manageTeamPane = document.getElementById("manageTeamPane");
+      const teamNameInput = document.getElementById("teamName");
+      const teamColorInput = document.getElementById("teamColor");
+      const btnCreateTeam = document.getElementById("btnCreateTeam");
+      const createTeamMsg = document.getElementById("createTeamMsg");
+      const teamsGrid = document.getElementById("teamsGrid");
+      const noTeams = document.getElementById("noTeams");
+      const teamModal = document.getElementById("teamModal");
+      const modalBody = document.getElementById("modalBody");
+      const btnConfirmTeam = document.getElementById("btnConfirmTeam");
+      const btnCloseModal = document.getElementById("btnCloseModal");
+
+      const btnViewRoy = document.getElementById("btnViewRoy");
+      const btnViewSav = document.getElementById("btnViewSav");
+
+      /* ========= VIEWER PICKER (FIRST RUN) ========= */
+
+      /* Helpers to render Drive images */
+      function extractDriveId(u) {
+        if (!u) return "";
+        if (/^[A-Za-z0-9_-]{20,}$/.test(u)) return u;
+        let m = u.match(/\/file\/d\/([^/]+)\//);
+        if (m) return m[1];
+        m = u.match(/[?&]id=([^&]+)/);
+        if (m) return m[1];
+        m = u.match(/[?&]export=view&id=([^&]+)/);
+        if (m) return m[1];
+        return "";
+      }
+      function driveLH3(u) {
+        const id = extractDriveId(u);
+        return id ? `https://lh3.googleusercontent.com/d/${id}` : u || "";
+      }
+      function driveThumb(u) {
+        const id = extractDriveId(u);
+        return id
+          ? `https://drive.google.com/thumbnail?id=${id}&sz=w1200`
+          : u || "";
+      }
+
+      /* Keep loader image in sync with chosen viewer */
+      function updateLoaderImage(forViewer) {
+        const which = forViewer || CURRENT_VIEWER;
+        const cands =
+          which === "Savanah"
+            ? [driveLH3(SAV_LINK), driveThumb(SAV_LINK)]
+            : [driveLH3(ROY_LINK), driveThumb(ROY_LINK)];
+        let i = 0;
+        const go = () => {
+          if (i >= cands.length || !cands[i]) return;
+          royImg.onerror = () => {
+            i++;
+            go();
+          };
+          royImg.src = cands[i++];
+        };
+        go();
+      }
+
+      /* Brand/title and active state */
+      function updateViewerUI() {
+        const h1 = document.querySelector("#intro h1");
+        const brand = document.querySelector(".brand");
+        btnViewRoy?.classList.toggle("active", CURRENT_VIEWER === "Roy");
+        btnViewSav?.classList.toggle("active", CURRENT_VIEWER === "Savanah");
+        if (h1)
+          h1.textContent =
+            CURRENT_VIEWER === "Roy"
+              ? "Ready to produce, Roy?"
+              : "Reviewing as Savanah";
+        if (brand)
+          brand.innerHTML = `<span class="dot"></span> Roy's Casting Minion`;
+      }
+      function setViewer(next) {
+        if (next !== "Roy" && next !== "Savanah") return;
+        CURRENT_VIEWER = next;
+        localStorage.setItem("viewer", next);
+        updateViewerUI();
+        updateLoaderImage(next);
+      }
+
+      /* Landing picker styles */
+      function injectViewerPickerStyles() {
+        if (document.getElementById("viewerPickerStyles")) return;
+        const css = `
+  .vp-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:1000}
+  .vp-card{width:min(760px,92vw);background:#fff;border:1px solid #e6e6e6;border-radius:16px;padding:16px;display:grid;gap:12px}
+  .vp-title{font-weight:800;font-size:18px}
+  .vp-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .vp-choice{border:1px solid #e6e6e6;border-radius:12px;overflow:hidden;background:#fff;display:grid;grid-template-rows:auto auto 1fr;padding:10px;cursor:pointer}
+  .vp-choice img{width:100%;height:220px;object-fit:cover;border-radius:10px;border:1px solid #eee}
+  .vp-name{font-weight:700;margin-top:8px}
+  .vp-actions{display:flex;gap:8px;margin-top:8px}
+  .vp-btn{padding:8px 12px;border:1px solid #e6e6e6;background:#fff;border-radius:8px;cursor:pointer}
+  .vp-btn.primary{background:#e2231a;border-color:#e2231a;color:#fff}
+  .vp-row{display:flex;justify-content:flex-end;gap:8px}
+  `;
+        const style = document.createElement("style");
+        style.id = "viewerPickerStyles";
+        style.textContent = css;
+        document.head.appendChild(style);
+      }
+
+      /* Build the landing “Who is viewing?” modal and block everything until chosen */
+      function showLandingPicker() {
+        injectViewerPickerStyles();
+
+        CURRENT_VIEWER = "";
+        updateViewerUI();
+
+        const bd = document.createElement("div");
+        bd.className = "vp-backdrop";
+        bd.id = "viewerPicker";
+
+        const card = document.createElement("div");
+        card.className = "vp-card";
+
+        const title = document.createElement("div");
+        title.className = "vp-title";
+        title.textContent = "Who is viewing?";
+        card.appendChild(title);
+
+        const grid = document.createElement("div");
+        grid.className = "vp-grid";
+
+        const mkChoice = (name, imgUrl) => {
+          const box = document.createElement("div");
+          box.className = "vp-choice";
+          const img = document.createElement("img");
+          let i = 0;
+          const cands = [driveLH3(imgUrl), driveThumb(imgUrl), imgUrl].filter(
+            Boolean
+          );
+          const tryNext = () => {
+            if (i >= cands.length) return;
+            img.onerror = () => {
+              i++;
+              tryNext();
+            };
+            img.src = cands[i++];
+          };
+          tryNext();
+
+          const nm = document.createElement("div");
+          nm.className = "vp-name";
+          nm.textContent = name;
+
+          const actions = document.createElement("div");
+          actions.className = "vp-actions";
+
+          const choose = document.createElement("button");
+          choose.className = "vp-btn primary";
+          choose.textContent = `Continue as ${name}`;
+          choose.addEventListener("click", () => {
+            // no password, proceed immediately
+            setViewer(name);
+            closePicker();
+            loadAll(true);
+          });
+
+          actions.appendChild(choose);
+          box.appendChild(img);
+          box.appendChild(nm);
+          box.appendChild(actions);
+
+          box.addEventListener("click", () => choose.click());
+          return box;
+        };
+
+        grid.appendChild(mkChoice("Roy", ROY_LINK));
+        grid.appendChild(mkChoice("Savanah", SAV_LINK));
+        card.appendChild(grid);
+
+        const row = document.createElement("div");
+        row.className = "vp-row";
+        const cancel = document.createElement("button");
+        cancel.className = "vp-btn";
+        cancel.textContent = "Cancel";
+        cancel.addEventListener("click", () => {
+          closePicker();
+          setTimeout(showLandingPicker, 0);
+        });
+        row.appendChild(cancel);
+        card.appendChild(row);
+
+        bd.appendChild(card);
+        document.body.appendChild(bd);
+
+        function closePicker() {
+          bd.remove();
+        }
+      }
+
+      /* ========= EVENTS ========= */
+      btnFullList.addEventListener("click", () => {
+        intro.classList.add("hidden");
+        showTalent();
+      });
+      btnTeamsBtn.addEventListener("click", () => {
+        intro.classList.add("hidden");
+        showTeams();
+      });
+      btnYesLoad.addEventListener("click", loadAll);
+      btnRefresh.addEventListener("click", loadAll);
+      btnTry.addEventListener("click", tryConnection);
+
+      /* Viewer buttons, no password */
+      btnViewRoy?.addEventListener("click", () => {
+        setViewer("Roy");
+        loadAll(true);
+      });
+      btnViewSav?.addEventListener("click", () => {
+        setViewer("Savanah");
+        loadAll(true);
+      });
+
+      qInput?.addEventListener("input", () => applyAllFilters());
+
+      btnFilters.addEventListener("click", (e) => {
+        e.stopPropagation();
+        filtersPanel.classList.toggle("show");
+      });
+      document.addEventListener("click", (e) => {
+        if (!filtersPanel.contains(e.target) && !btnFilters.contains(e.target))
+          filtersPanel.classList.remove("show");
+      });
+
+      btnApplyFilters.addEventListener("click", () => {
+        readFiltersFromUI();
+        applyAllFilters();
+        filtersPanel.classList.remove("show");
+      });
+
+      btnClearFilters.addEventListener("click", () => {
+        qInput.value = "";
+        resetFiltersUI();
+        applyAllFilters();
+        filtersPanel.classList.remove("show");
+      });
+
+      [
+        fCountry,
+        fNationality,
+        fEth,
+        fSport,
+        fDance,
+        fLang,
+        fVote,
+        fTeam,
+        fDate,
+      ].forEach((sel) =>
+        sel.addEventListener("change", () => {
+          readFiltersFromUI();
+          applyAllFilters();
+        })
+      );
+      [fAgeMin, fAgeMax].forEach((inp) =>
+        inp.addEventListener("input", () => {
+          readFiltersFromUI();
+          applyAllFilters();
+        })
+      );
+
+      tabCreate.addEventListener("click", () => {
+        tabCreate.classList.add("active");
+        tabManage.classList.remove("active");
+        createTeamPane.classList.remove("hidden");
+        manageTeamPane.classList.add("hidden");
+      });
+      tabManage.addEventListener("click", async () => {
+        tabManage.classList.add("active");
+        tabCreate.classList.remove("active");
+        createTeamPane.classList.add("hidden");
+        manageTeamPane.classList.remove("hidden");
+        await ensureTeamsLoaded();
+        refreshTeamsUI();
+      });
+
+      btnCreateTeam.addEventListener("click", createTeam);
+      btnCloseModal.addEventListener("click", () =>
+        teamModal.classList.remove("show")
+      );
+
+      /* On first paint, block with the landing picker. No data loads before choice. */
+      document.addEventListener("DOMContentLoaded", () => {
+        [ROY_LINK, SAV_LINK].forEach((u) => {
+          const img = new Image();
+          img.referrerPolicy = "no-referrer";
+          img.src = driveLH3(u);
+        });
+        showLandingPicker();
+      });
+
+      /* ========= NOTICES / LOADER ========= */
+      function showNotice(msg, kind = "warn") {
+        noticeBox.textContent = msg;
+        noticeBox.className = "notice " + kind;
+        noticeBox.classList.remove("hidden");
+      }
+      function hideNotice() {
+        noticeBox.classList.add("hidden");
+        rawBox.classList.add("hidden");
+      }
+
+      /* Always compute the correct viewer-facing message */
+      function _viewerLoadingText() {
+        return CURRENT_VIEWER === "Savanah"
+          ? "info loading :)"
+          : "info loading... patience roy";
+      }
+
+      /* When showing loader, always set the correct text */
+      function showLoader() {
+        setLoaderText(); // sets viewer-appropriate message
+        loader.classList.add("show");
+      }
+      function hideLoader() {
+        loader.classList.remove("show");
+      }
+
+      /* Force the text to our viewer-specific default, ignoring any custom strings */
+      function setLoaderText() {
+        const el = document.querySelector(".loader-text");
+        if (el) el.textContent = _viewerLoadingText();
+      }
+
+      /* Wrapper that keeps behavior consistent */
+      function withLoader(_ignoredMessage, fn) {
+        return (async () => {
+          try {
+            setLoaderText(); // ensure correct text before showing
+            showLoader();
+            return await fn();
+          } finally {
+            setLoaderText(); // keep it consistent after
+            hideLoader();
+          }
+        })();
+      }
+      /* ========= FIELD HELPERS ========= */
+
+      function getDisplayName(r = {}) {
+        if (r.name) return String(r.name).trim();
+        if (r.Name) return String(r.Name).trim();
+        const keys = Object.keys(r);
+        const nameKey = keys.find(
+          (k) => /name/i.test(k) && r[k] != null && String(r[k]).trim() !== ""
+        );
+        if (nameKey) return String(r[nameKey]).trim();
+        const firstKey = keys.find((k) => /first/i.test(k) && r[k]);
+        const lastKey = keys.find((k) => /last/i.test(k) && r[k]);
+        if (firstKey || lastKey) {
+          return [r[firstKey] || "", r[lastKey] || ""]
+            .map((v) => String(v || "").trim())
+            .filter(Boolean)
+            .join(" ")
+            .trim();
+        }
+        const altKey = keys.find(
+          (k) => /(talent|applicant|candidate|title)/i.test(k) && r[k]
+        );
+        if (altKey) return String(r[altKey]).trim();
+        return "";
+      }
+      function getVal(row, keys) {
+        for (const k of keys) {
+          const v = row?.[k];
+          if (v != null && String(v).trim() !== "") return String(v).trim();
+        }
+        return "";
+      }
+      function getCountry(row) {
+        if (row && row.C != null && String(row.C).trim() !== "") {
+          return String(row.C).trim();
+        }
+        return getVal(row, ["country", "Country"]);
+      }
+      function normalizeDateToMDY(val) {
+        if (!val) return "";
+        const s = String(val).trim();
+        const d = new Date(s);
+        if (isNaN(d)) return "";
+        return d.toLocaleDateString("en-US");
+      }
+      function eqLoose(a, b) {
+        return (
+          String(a || "")
+            .trim()
+            .toLowerCase() ===
+          String(b || "")
+            .trim()
+            .toLowerCase()
+        );
+      }
+      function getNationality(row) {
+        const candidates = [
+          "nationality",
+          "Nationality",
+          "citizenship",
+          "Citizenship",
+          "origin",
+          "Origin",
+          "countryOfOrigin",
+          "CountryOfOrigin",
+          "Country of Origin",
+          "PlaceOfBirth",
+          "Birthplace",
+          "B",
+        ];
+        let v = getVal(row, candidates);
+        if (!v) {
+          const keys = Object.keys(row || {});
+          const dyn = keys.find(
+            (k) => /(nation|citizen|origin|birth)/i.test(k) && row[k]
+          );
+          if (dyn) v = String(row[dyn]).trim();
+        }
+        return v;
+      }
+      function getDance(row) {
+        let raw = "";
+        if (row && row.G != null && String(row.G).trim() !== "")
+          raw = String(row.G);
+        if (!raw) {
+          raw = getVal(row, [
+            "dance",
+            "Dance",
+            "danceExperience",
+            "DanceExperience",
+            "CanDance",
+            "canDance",
+            "Dancing",
+            "Dances",
+            "J",
+          ]);
+        }
+        if (!raw) return "";
+        const s = String(raw).trim().toLowerCase();
+        if (
+          ["yes", "y", "true", "1", "✓", "check", "checked"].includes(s) ||
+          /✓/.test(raw)
+        )
+          return "yes";
+        if (["no", "n", "false", "0"].includes(s)) return "no";
+        if (/^y|^yes|✓|ballet|salsa|hip ?hop|contemporary|dance/i.test(raw))
+          return "yes";
+        if (/^n|^no(?!t)/i.test(raw)) return "no";
+        return s;
+      }
+      function normLangToken(s) {
+        return String(s || "")
+          .trim()
+          .toLowerCase()
+          .replace(/[.\-_/]/g, " ")
+          .replace(/\s+/g, " ");
+      }
+      function getLangs(row) {
+        const candidates = [
+          "K",
+          "k",
+          "languages",
+          "Languages",
+          "Language",
+          "Lang",
+          "languageSpoken",
+          "LanguageSpoken",
+          "languagesSpoken",
+          "LanguagesSpoken",
+          "spokenLanguages",
+          "SpokenLanguages",
+          "language(s)",
+          "Language(s)",
+          "idioma",
+          "Idiomas",
+        ];
+        let raw = getVal(row, candidates);
+        if (!raw) {
+          const keys = Object.keys(row || {});
+          if (keys.length >= 11) {
+            const guess = row[keys[10]];
+            if (guess != null && String(guess).trim() !== "")
+              raw = String(guess);
+          }
+        }
+        if (!raw) return [];
+        const parts = raw.replace(/\band\b/gi, ",").split(/[\/,;|&]+|\s{2,}/);
+        const tokens = parts
+          .map(normLangToken)
+          .filter(Boolean)
+          .map((s) => {
+            if (/^eng(lish)?$/.test(s) || s === "en" || s === "eng")
+              return "english";
+            if (
+              /^port(uguese)?$/.test(s) ||
+              s.includes("portugu") ||
+              s === "pt" ||
+              s === "por"
+            )
+              return "portuguese";
+            if (
+              /^span(ish)?$/.test(s) ||
+              s.includes("espan") ||
+              s.includes("castell") ||
+              s === "es" ||
+              s === "spa"
+            )
+              return "spanish";
+            return s;
+          });
+        return Array.from(new Set(tokens));
+      }
+
+      /* ========= API ========= */
+      async function tryConnection() {
+        hideNotice();
+        showLoader();
+        try {
+          const res = await fetch(API_URL, { cache: "no-store" });
+          const txt = await res.text();
+          rawBox.textContent = `HTTP ${res.status}\n\n` + txt.slice(0, 2000);
+          rawBox.classList.remove("hidden");
+          if (!res.ok)
+            showNotice(
+              "The API returned HTTP " +
+                res.status +
+                ". Check Apps Script deployment.",
+              "err"
+            );
+          else
+            showNotice(
+              "Got a response. If it is not JSON { ok: true }, redeploy Apps Script.",
+              "ok"
+            );
+        } catch (e) {
+          showNotice("Could not reach the API: " + e.message, "err");
+        } finally {
+          hideLoader();
+        }
+      }
+      async function apiPost(payload) {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload),
+        });
+        let data = {};
+        try {
+          data = await res.json();
+        } catch {}
+        if (!res.ok || !data.ok)
+          throw new Error(data.error || "Request failed");
+        return data;
+      }
+
+      /* ========= FILTER UI HELPERS ========= */
+      function readFiltersFromUI() {
+        filters.country = fCountry.value;
+        filters.nationality = fNationality.value;
+        filters.ethnicity = fEth.value;
+        filters.sport = fSport.value;
+        filters.dance = fDance.value;
+        filters.language = (fLang?.value || "").trim().toLowerCase();
+        filters.ageMin = fAgeMin.value;
+        filters.ageMax = fAgeMax.value;
+        filters.vote = fVote.value;
+        filters.team = fTeam?.value || "";
+        filters.date = fDate?.value || "";
+      }
+      function clearFiltersUI() {
+        fCountry.value = "";
+        fNationality.value = "";
+        fEth.value = "";
+        fSport.value = "";
+        fDance.value = "";
+        fLang.value = "";
+        fVote.value = "";
+        if (fTeam) fTeam.value = "";
+        if (fDate) fDate.value = "";
+        fAgeMin.value = "";
+        fAgeMax.value = "";
+      }
+      function resetFiltersUI() {
+        clearFiltersUI();
+        Object.assign(filters, {
+          country: "",
+          nationality: "",
+          ethnicity: "",
+          sport: "",
+          dance: "",
+          language: "",
+          ageMin: "",
+          ageMax: "",
+          vote: "",
+          team: "",
+          date: "",
+        });
+        chips.innerHTML = "";
+      }
+      function fillSelect(selectEl, values) {
+        if (!selectEl) return;
+        const keep = selectEl.value;
+        const opts = [`<option value="">Any</option>`].concat(
+          values.map((v) => `<option>${v}</option>`)
+        );
+        selectEl.innerHTML = opts.join("");
+        if (values.includes(keep)) selectEl.value = keep;
+      }
+      function rebuildTeamDateNationalityOptions() {
+        const teamSet = new Set();
+        const dateSet = new Set();
+        const nationalitySet = new Set();
+        for (const r of ALL_ROWS) {
+          const team = getVal(r, ["teamName", "TeamName", "Team", "H"]);
+          if (team) teamSet.add(team);
+          const dsRaw = getVal(r, [
+            "dateAddedStr",
+            "Date Added",
+            "DateAdded",
+            "dateAdded",
+            "L",
+          ]);
+          const ds =
+            dsRaw && /^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(dsRaw)
+              ? dsRaw
+              : normalizeDateToMDY(dsRaw);
+          if (ds) dateSet.add(ds);
+          const nat = getNationality(r);
+          if (nat) nationalitySet.add(nat);
+        }
+        const teams = Array.from(teamSet).sort((a, b) =>
+          a.localeCompare(b, undefined, { sensitivity: "base" })
+        );
+        const dates = Array.from(dateSet).sort(
+          (a, b) => new Date(b) - new Date(a)
+        );
+        const nats = Array.from(nationalitySet).sort((a, b) =>
+          a.localeCompare(b, undefined, { sensitivity: "base" })
+        );
+        fillSelect(fTeam, teams);
+        fillSelect(fDate, dates);
+        fillSelect(fNationality, nats);
+      }
+
+      /* ========= TEAMS LOADING ========= */
+      async function fetchTeamsFor(owner) {
+        try {
+          const data = await apiPost({ op: "listTeams", viewer: owner });
+          return Array.isArray(data.teams) ? data.teams : [];
+        } catch {
+          return [];
+        }
+      }
+
+      async function ensureTeamsLoaded() {
+        // If we've already fetched both owners in this session, reuse
+        if (TEAMS && TEAMS._allOwnersLoaded) return;
+
+        let merged = [];
+        // Try a backend that returns ALL teams in one shot, if you added it
+        try {
+          const all = await apiPost({ op: "listAllTeams" });
+          if (Array.isArray(all.teams) && all.teams.length) merged = all.teams;
+        } catch {}
+
+        // Fallback: fetch explicitly for both owners and merge
+        if (!merged.length) {
+          const [royTeams, savTeams] = await Promise.all([
+            fetchTeamsFor("Roy"),
+            fetchTeamsFor("Savanah"),
+          ]);
+          merged = [...royTeams, ...savTeams];
+        }
+
+        // De-dupe by teamId
+        const seen = new Set();
+        TEAMS = merged.filter((t) => {
+          if (!t || !t.teamId) return false;
+          if (seen.has(t.teamId)) return false;
+          seen.add(t.teamId);
+          return true;
+        });
+        TEAMS._allOwnersLoaded = true;
+      }
+
+      /* ========= LOAD EVERYTHING ========= */
+      async function loadAll() {
+        hideNotice();
+        showLoader();
+        try {
+          let rows = null;
+          try {
+            const boot = await apiPost({
+              op: "bootstrap",
+              viewer: CURRENT_VIEWER,
+            });
+            rows = Array.isArray(boot.rows) ? boot.rows : null;
+            if (Array.isArray(boot.teams)) TEAMS = boot.teams;
+          } catch {}
+          if (!rows) {
+            const res = await fetch(
+              API_URL + "?viewer=" + encodeURIComponent(CURRENT_VIEWER),
+              { cache: "no-store" }
+            );
+            const raw = await res.text();
+            let data;
+            try {
+              data = JSON.parse(raw);
+            } catch {
+              showNotice("API did not return JSON.", "err");
+              rawBox.textContent = raw.slice(0, 2000);
+              rawBox.classList.remove("hidden");
+              return;
+            }
+            if (!data.ok) {
+              showNotice(data.error || "Backend error.", "err");
+              return;
+            }
+            rows = Array.isArray(data.rows) ? data.rows : [];
+            TEAMS = Array.isArray(data.teams) ? data.teams : [];
+          }
+          ALL_ROWS = rows.map((r) => {
+            const x = { ...r };
+            x.name = x.name || getDisplayName(x);
+            if (x.rowIndex == null && x.RowIndex != null)
+              x.rowIndex = x.RowIndex;
+            x.country = getCountry(x);
+            const d = getDance(x);
+            x.dance =
+              d && d.toLowerCase() === "yes"
+                ? "yes"
+                : d && d.toLowerCase() === "no"
+                ? "no"
+                : d || "";
+            return x;
+          });
+
+          votes = {};
+          ALL_ROWS.forEach((r) => {
+            if (r.vote === "Yes" || r.vote === "No") votes[r.rowIndex] = r.vote;
+          });
+
+          rebuildTeamDateNationalityOptions();
+
+          intro.classList.add("hidden");
+          statusLine.textContent = `Loaded ${ALL_ROWS.length} records`;
+          resetFiltersUI();
+          showTalent();
+          applyAllFilters();
+        } catch (err) {
+          showNotice("Fetch failed: " + err.message, "err");
+        } finally {
+          hideLoader();
+        }
+      }
+
+      /* ========= PAGE SWITCHERS ========= */
+      function showTalent() {
+        pageTeams.classList.add("hidden");
+        pageTalent.classList.remove("hidden");
+      }
+      async function showTeams() {
+        pageTalent.classList.add("hidden");
+        pageTeams.classList.remove("hidden");
+        try {
+          // Always load both Roy and Savanah teams so either viewer sees all
+          await ensureTeamsLoaded();
+          refreshTeamsUI();
+        } catch (e) {
+          showNotice("Could not load teams: " + e.message, "err");
+        }
+      }
+
+      /* ========= FILTERING & RENDER ========= */
+      function applyAllFilters() {
+        const q = (qInput?.value || "").toLowerCase();
+        FILTERED = ALL_ROWS.filter((r) => {
+          const dn = getDisplayName(r);
+          const langs = getLangs(r);
+          const langsBlob = langs.join(" ");
+          const rawLangFromSheet =
+            r.K ||
+            r.k ||
+            r.languages ||
+            r.Languages ||
+            r.Language ||
+            r.Lang ||
+            r.languageSpoken ||
+            r.LanguagesSpoken ||
+            r.SpokenLanguages ||
+            "";
+
+          const danceNorm = r._dance || getDance(r);
+          const nat = r._nationality || getNationality(r);
+
+          const blob = [
+            dn,
+            r.country,
+            nat,
+            r.sport,
+            r.ethnicity,
+            danceNorm,
+            r.mediaLink,
+            rawLangFromSheet,
+            langsBlob,
+          ]
+            .filter(Boolean)
+            .map((x) => String(x).toLowerCase())
+            .join(" ");
+          if (q && !blob.includes(q)) return false;
+
+          if (filters.country && !eqLoose(r.country, filters.country))
+            return false;
+          if (filters.nationality && !eqLoose(nat, filters.nationality))
+            return false;
+          if (filters.ethnicity && !eqLoose(r.ethnicity, filters.ethnicity))
+            return false;
+          if (filters.sport && !eqLoose(r.sport, filters.sport)) return false;
+
+          if (filters.language) {
+            const rowSet = new Set(langs);
+            if (!rowSet.has(filters.language)) return false;
+          }
+
+          const rowTeam = getVal(r, ["teamName", "TeamName", "Team", "H"]);
+          if (filters.team && !eqLoose(rowTeam, filters.team)) return false;
+
+          if (filters.dance) {
+            const v = String(danceNorm || "").toLowerCase();
+            if (filters.dance === "yes" && v !== "yes") return false;
+            if (filters.dance === "no" && v !== "no") return false;
+          }
+
+          const ageNum = parseInt(
+            String(r.age || r.Age || "").replace(/[^\d]/g, ""),
+            10
+          );
+          if (!isNaN(ageNum)) {
+            if (filters.ageMin && ageNum < Number(filters.ageMin)) return false;
+            if (filters.ageMax && ageNum > Number(filters.ageMax)) return false;
+          } else if (filters.ageMin || filters.ageMax) {
+            return false;
+          }
+
+          if (filters.date) {
+            const dsRaw = getVal(r, [
+              "dateAddedStr",
+              "Date Added",
+              "DateAdded",
+              "dateAdded",
+              "L",
+            ]);
+            const rowDate =
+              dsRaw && /^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(dsRaw)
+                ? dsRaw
+                : normalizeDateToMDY(dsRaw);
+            if (rowDate !== filters.date) return false;
+          }
+
+          const curVote = votes[r.rowIndex] || r.vote || "";
+          if (filters.vote === "Yes" && curVote !== "Yes") return false;
+          if (filters.vote === "No" && curVote !== "No") return false;
+          if (
+            filters.vote === "Unvoted" &&
+            (curVote === "Yes" || curVote === "No")
+          )
+            return false;
+
+          return true;
+        });
+        renderGrid();
+        renderChips();
+      }
+
+      function renderChips() {
+        chips.innerHTML = "";
+        const items = [];
+        if (filters.country)
+          items.push([
+            "Country",
+            filters.country,
+            () => {
+              fCountry.value = "";
+              filters.country = "";
+            },
+          ]);
+        if (filters.nationality)
+          items.push([
+            "Nationality",
+            filters.nationality,
+            () => {
+              fNationality.value = "";
+              filters.nationality = "";
+            },
+          ]);
+        if (filters.ethnicity)
+          items.push([
+            "Ethnicity",
+            filters.ethnicity,
+            () => {
+              fEth.value = "";
+              filters.ethnicity = "";
+            },
+          ]);
+        if (filters.sport)
+          items.push([
+            "Sport",
+            filters.sport,
+            () => {
+              fSport.value = "";
+              filters.sport = "";
+            },
+          ]);
+        if (filters.dance)
+          items.push([
+            "Dance",
+            filters.dance,
+            () => {
+              fDance.value = "";
+              filters.dance = "";
+            },
+          ]);
+        if (filters.language)
+          items.push([
+            "Languages",
+            filters.language[0]?.toUpperCase() + filters.language.slice(1),
+            () => {
+              fLang.value = "";
+              filters.language = "";
+            },
+          ]);
+        if (filters.ageMin)
+          items.push([
+            "Age min",
+            filters.ageMin,
+            () => {
+              fAgeMin.value = "";
+              filters.ageMin = "";
+            },
+          ]);
+        if (filters.ageMax)
+          items.push([
+            "Age max",
+            filters.ageMax,
+            () => {
+              fAgeMax.value = "";
+              filters.ageMax = "";
+            },
+          ]);
+        if (filters.vote)
+          items.push([
+            "Vote",
+            filters.vote,
+            () => {
+              fVote.value = "";
+              filters.vote = "";
+            },
+          ]);
+        if (filters.team)
+          items.push([
+            "Team",
+            filters.team,
+            () => {
+              fTeam.value = "";
+              filters.team = "";
+            },
+          ]);
+        if (filters.date)
+          items.push([
+            "Date",
+            filters.date,
+            () => {
+              fDate.value = "";
+              filters.date = "";
+            },
+          ]);
+        items.forEach(([k, v, clear]) => {
+          const chip = document.createElement("span");
+          chip.className = "chip";
+          chip.textContent = `${k}: ${v}`;
+          chip.style.cursor = "pointer";
+          chip.title = "Remove";
+          chip.addEventListener("click", () => {
+            clear();
+            applyAllFilters();
+          });
+          chips.appendChild(chip);
+        });
+      }
+
+      function kv(labelText, valueText) {
+        const w = document.createElement("div");
+        const l = document.createElement("div");
+        l.className = "label";
+        l.textContent = labelText;
+        const v = document.createElement("div");
+        v.className = "kv";
+        v.textContent = valueText || "";
+        w.appendChild(l);
+        w.appendChild(v);
+        return w;
+      }
+      function yesNoChip(val) {
+        const span = document.createElement("span");
+        const s = String(val || "").toLowerCase();
+        if (s === "yes") {
+          span.className = "chipYesNo chipYes";
+          span.textContent = "Yes";
+        } else if (s === "no") {
+          span.className = "chipYesNo chipNo";
+          span.textContent = "No";
+        } else {
+          span.className = "chipYesNo";
+          span.textContent = val || "";
+        }
+        return span;
+      }
+
+      function renderGrid() {
+        cardsEl.innerHTML = "";
+        if (FILTERED.length === 0) {
+          emptyMsg.classList.remove("hidden");
+          statusLine.textContent = `Showing 0 of ${ALL_ROWS.length}`;
+          return;
+        }
+        emptyMsg.classList.add("hidden");
+        statusLine.textContent = `Showing ${FILTERED.length} of ${ALL_ROWS.length}`;
+        const frag = document.createDocumentFragment();
+        for (const r of FILTERED) frag.appendChild(renderCard(r));
+        cardsEl.appendChild(frag);
+      }
+
+      function renderCard(row) {
+        const displayName = getDisplayName(row) || "(No name)";
+        const {
+          country = "",
+          age = "",
+          ethnicity = "",
+          sport = "",
+          mediaLink = "",
+          headshot = "",
+          rowIndex,
+        } = row || {};
+        const nat = row._nationality || getNationality(row);
+        const dance = row._dance || getDance(row);
+
+        const wrap = document.createElement("div");
+        wrap.className = "cardWrap";
+        const card = document.createElement("article");
+        card.className = "card";
+
+        const img = document.createElement("img");
+        img.loading = "lazy";
+        img.alt = displayName ? `${displayName} headshot` : "Headshot";
+        img.referrerPolicy = "no-referrer";
+        const cands = [];
+        if (headshot)
+          cands.push(driveLH3(headshot), driveThumb(headshot), headshot);
+        const withTS = (u) =>
+          u ? u + (u.includes("?") ? "&" : "?") + "ts=" + Date.now() : u;
+        let i = 0;
+        const tryNext = () => {
+          if (i >= cands.length || !cands[i]) {
+            img.src =
+              "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAGQCAQAAABh1i0bAAAAAElFTkSuQmCC";
+            img.style.background = "#f3f3f3";
+            return;
+          }
+          img.onerror = tryNext;
+          img.src = withTS(cands[i++]);
+        };
+        tryNext();
+        card.appendChild(img);
+
+        const body = document.createElement("div");
+        body.className = "card-body";
+
+        const nameRow = document.createElement("div");
+        nameRow.className = "name-row";
+        const nameEl = document.createElement("div");
+        nameEl.className = "name";
+        if (mediaLink) {
+          // Always use column I for the profile link (fallback to mediaLink if I is empty)
+          const rawLink = (row && (row.I ?? row.i)) ?? mediaLink ?? "";
+          let link = String(rawLink || "").trim();
+
+          // Normalize common paste cases (e.g., "www.example.com")
+          if (link && /^www\./i.test(link)) link = "https://" + link;
+          // If it looks like a domain but no protocol, add https
+          if (
+            link &&
+            !/^https?:\/\//i.test(link) &&
+            /^[A-Za-z0-9.-]+\.[A-Za-z]{2,}([/?#].*)?$/.test(link)
+          ) {
+            link = "https://" + link;
+          }
+
+          const hasLink = !!(link && /^https?:\/\//i.test(link));
+
+          if (hasLink) {
+            const a = document.createElement("a");
+            a.href = link;
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+            a.textContent = displayName;
+            nameEl.appendChild(a);
+          } else {
+            // No usable link found; just render the name as text
+            nameEl.textContent = displayName;
+          }
+        } else {
+          nameEl.textContent = displayName;
+        }
+        nameRow.appendChild(nameEl);
+
+        const sendBtn = document.createElement("button");
+        sendBtn.className = "btn";
+        sendBtn.textContent = "Send to team";
+        sendBtn.addEventListener("click", () =>
+          openTeamPicker(rowIndex, displayName)
+        );
+        nameRow.appendChild(sendBtn);
+
+        body.appendChild(nameRow);
+        body.appendChild(kv("Country", country));
+        body.appendChild(kv("Nationality", nat));
+        body.appendChild(kv("Age", age));
+        body.appendChild(kv("Ethnicity", ethnicity));
+        body.appendChild(kv("Sport", sport));
+
+        const danceWrap = document.createElement("div");
+        const l = document.createElement("div");
+        l.className = "label";
+        l.textContent = "Dance experience";
+        const v = document.createElement("div");
+        v.className = "kv";
+        v.appendChild(yesNoChip(dance));
+        danceWrap.appendChild(l);
+        danceWrap.appendChild(v);
+        body.appendChild(danceWrap);
+
+        body.appendChild(
+          kv(
+            "Languages",
+            getLangs(row)
+              .map((s) => s[0]?.toUpperCase() + s.slice(1))
+              .join(", ")
+          )
+        );
+        body.appendChild(kv("Team", row.teamName || ""));
+
+        const voteRow = document.createElement("div");
+        voteRow.className = "voteRow";
+        const btnNo = document.createElement("button");
+        btnNo.className = "btn no";
+        btnNo.textContent = "No";
+        const btnYes = document.createElement("button");
+        btnYes.className = "btn yes";
+        btnYes.textContent = "Yes";
+        const current = votes[rowIndex] || row.vote || "";
+        if (current === "Yes") btnYes.classList.add("selected");
+        if (current === "No") btnNo.classList.add("selected");
+        btnNo.addEventListener("click", () =>
+          handleVoteClick(rowIndex, "No", wrap, btnYes, btnNo)
+        );
+        btnYes.addEventListener("click", () =>
+          handleVoteClick(rowIndex, "Yes", wrap, btnYes, btnNo)
+        );
+        voteRow.appendChild(btnNo);
+        voteRow.appendChild(btnYes);
+        body.appendChild(voteRow);
+
+        card.appendChild(body);
+        wrap.appendChild(card);
+
+        const vbadge = votes[rowIndex] || row.vote;
+        if (vbadge === "Yes" || vbadge === "No") {
+          const badge = document.createElement("div");
+          badge.className = "badge";
+          badge.textContent = vbadge === "Yes" ? "Voted Yes" : "Voted No";
+          wrap.appendChild(badge);
+        }
+        return wrap;
+      }
+
+      /* ========= VOTING ========= */
+      async function handleVoteClick(
+        rowIndex,
+        value,
+        cardWrapEl,
+        btnYes,
+        btnNo
+      ) {
+        if (rowIndex == null) {
+          showNotice("Cannot vote. Missing row index.", "err");
+          return;
+        }
+        btnYes.classList.toggle("selected", value === "Yes");
+        btnNo.classList.toggle("selected", value === "No");
+        const old = cardWrapEl.querySelector(".badge");
+        if (old) old.remove();
+        const badge = document.createElement("div");
+        badge.className = "badge";
+        badge.textContent = value === "Yes" ? "Voted Yes" : "Voted No";
+        cardWrapEl.appendChild(badge);
+        votes[rowIndex] = value;
+        try {
+          await apiPost({
+            op: "vote",
+            rowIndex,
+            value,
+            viewer: CURRENT_VIEWER,
+          });
+          statusLine.textContent = `Saved (${CURRENT_VIEWER}) vote: row ${rowIndex} = ${value}`;
+          if (filters.vote) applyAllFilters();
+        } catch (e) {
+          showNotice("Save failed: " + e.message, "err");
+        }
+      }
+
+      /* ========= TEAMS UI ========= */
+      async function refreshTeams() {
+        try {
+          const data = await apiPost({
+            op: "listTeams",
+            viewer: CURRENT_VIEWER,
+          });
+          TEAMS = Array.isArray(data.teams) ? data.teams : [];
+        } catch (e) {
+          console.warn("refreshTeams failed:", e);
+          TEAMS = [];
+        }
+      }
+
+      function teamRowEl(t, isOwnerView) {
+        const card = document.createElement("div");
+        card.className = "teamCard";
+
+        const header = document.createElement("div");
+        header.className = "row";
+
+        const left = document.createElement("div");
+        const dot = document.createElement("span");
+        dot.className = "colorDot";
+        dot.style.background = t.color || "#ccc";
+
+        const title = document.createElement("span");
+        title.textContent = `${t.name} `;
+
+        const small = document.createElement("small");
+        small.style.color = "#666";
+        small.textContent = `(${t.memberCount ?? 0} member${
+          (t.memberCount ?? 0) === 1 ? "" : "s"
+        })`;
+
+        left.appendChild(dot);
+        left.appendChild(title);
+        left.appendChild(small);
+
+        const right = document.createElement("div");
+        right.style.display = "flex";
+        right.style.gap = "8px";
+
+        const btnView = document.createElement("button");
+        btnView.className = "btn";
+        btnView.textContent = "View";
+        btnView.addEventListener("click", async () => {
+          setLoaderText();
+          showLoader();
+          try {
+            await openTeamDetail(t.teamId, t.name, t.color);
+          } finally {
+            setLoaderText();
+            hideLoader();
+          }
+        });
+
+        const btnRename = document.createElement("button");
+        btnRename.className = "btn";
+        btnRename.textContent = "Rename";
+
+        const btnColor = document.createElement("button");
+        btnColor.className = "btn";
+        btnColor.textContent = "Color";
+
+        const btnDelete = document.createElement("button");
+        btnDelete.className = "btn";
+        btnDelete.textContent = "Delete";
+
+        // Only allow edit controls on teams owned by the CURRENT_VIEWER
+        const isMine =
+          String(t.owner || "").toLowerCase() ===
+          String(CURRENT_VIEWER || "").toLowerCase();
+        if (!isMine) {
+          btnRename.disabled = true;
+          btnColor.disabled = true;
+          btnDelete.disabled = true;
+          btnRename.title = "Only the owner can rename this team";
+          btnColor.title = "Only the owner can recolor this team";
+          btnDelete.title = "Only the owner can delete this team";
+        } else {
+          btnRename.addEventListener("click", async () => {
+            const nv = prompt("New team name:", t.name);
+            if (!nv) return;
+            try {
+              await apiPost({ op: "renameTeam", teamId: t.teamId, name: nv });
+              await refreshTeams();
+              refreshTeamsUI();
+            } catch (e) {
+              showNotice("Rename failed: " + e.message, "err");
+            }
+          });
+          btnColor.addEventListener("click", async () => {
+            const nv = prompt("Hex color (#rrggbb):", t.color || "#cccccc");
+            if (!nv) return;
+            try {
+              await apiPost({ op: "recolorTeam", teamId: t.teamId, color: nv });
+              await refreshTeams();
+              refreshTeamsUI();
+            } catch (e) {
+              showNotice("Color change failed: " + e.message, "err");
+            }
+          });
+          btnDelete.addEventListener("click", async () => {
+            if (
+              !confirm(`Delete team "${t.name}"? Members will be unassigned.`)
+            )
+              return;
+            try {
+              await apiPost({ op: "deleteTeam", teamId: t.teamId });
+              await refreshTeams();
+              refreshTeamsUI();
+            } catch (e) {
+              showNotice("Delete failed: " + e.message, "err");
+            }
+          });
+        }
+
+        right.appendChild(btnView);
+        right.appendChild(btnRename);
+        right.appendChild(btnColor);
+        right.appendChild(btnDelete);
+
+        header.appendChild(left);
+        header.appendChild(right);
+        card.appendChild(header);
+
+        // Sub-label to show owner
+        const ownerNote = document.createElement("div");
+        ownerNote.style.fontSize = "12px";
+        ownerNote.style.color = "#777";
+        ownerNote.textContent = `Owner: ${t.owner || "Unknown"}`;
+        card.appendChild(ownerNote);
+
+        return card;
+      }
+
+      function sectionHeader(text) {
+        const h = document.createElement("div");
+        h.style.fontWeight = "800";
+        h.style.margin = "8px 0 4px";
+        h.style.fontSize = "14px";
+        h.textContent = text;
+        return h;
+      }
+
+      function refreshTeamsUI() {
+        teamsGrid.innerHTML = "";
+        if (!TEAMS || TEAMS.length === 0) {
+          noTeams.classList.remove("hidden");
+          return;
+        }
+        noTeams.classList.add("hidden");
+
+        const viewer = String(CURRENT_VIEWER || "").toLowerCase();
+
+        // Group + sort by name for stable, clean display
+        const mine = [];
+        const roys = [];
+        const savs = [];
+        TEAMS.forEach((t) => {
+          const owner = String(t.owner || "").toLowerCase();
+          if (owner === viewer) mine.push(t);
+          if (owner === "roy") roys.push(t);
+          if (owner === "savanah") savs.push(t);
+        });
+        const byName = (a, b) =>
+          String(a.name || "").localeCompare(String(b.name || ""), undefined, {
+            sensitivity: "base",
+          });
+        mine.sort(byName);
+        roys.sort(byName);
+        savs.sort(byName);
+
+        const otherLabel =
+          viewer === "savanah" ? "Roy's teams" : "Savanah's teams";
+        const others = viewer === "savanah" ? roys : savs;
+
+        const makeSection = (title, list, editable) => {
+          const wrap = document.createElement("div");
+          wrap.style.display = "grid";
+          wrap.style.gap = "8px";
+
+          const header = document.createElement("div");
+          header.style.display = "flex";
+          header.style.alignItems = "center";
+          header.style.gap = "8px";
+          header.style.margin = "8px 0 4px";
+
+          const hText = document.createElement("div");
+          hText.style.fontWeight = "800";
+          hText.style.fontSize = "14px";
+          hText.textContent = `${title} (${list.length})`;
+
+          const rule = document.createElement("div");
+          rule.style.flex = "1";
+          rule.style.height = "1px";
+          rule.style.background = "var(--border)";
+
+          header.appendChild(hText);
+          header.appendChild(rule);
+          wrap.appendChild(header);
+
+          const grid = document.createElement("div");
+          grid.className = "teamsGrid";
+          list.forEach((t) => grid.appendChild(teamRowEl(t, editable)));
+          wrap.appendChild(grid);
+
+          return wrap;
+        };
+
+        const frag = document.createDocumentFragment();
+        // Your teams section first (editable; still shows even if 0 for consistency)
+        frag.appendChild(makeSection(`${CURRENT_VIEWER}'s teams`, mine, true));
+        // Other person's section (view-only)
+        frag.appendChild(makeSection(otherLabel, others, false));
+
+        teamsGrid.appendChild(frag);
+      }
+
+      async function createTeam() {
+        const name = (teamNameInput.value || "").trim();
+        const color = (teamColorInput.value || "").trim() || "#cccccc";
+        if (!name) {
+          createTeamMsg.textContent = "Please enter a team name.";
+          createTeamMsg.className = "notice warn";
+          createTeamMsg.classList.remove("hidden");
+          return;
+        }
+        try {
+          // Owner will be set server-side using CURRENT_VIEWER we send here
+          const resp = await apiPost({
+            op: "createTeam",
+            name,
+            color,
+            viewer: CURRENT_VIEWER,
+          });
+          createTeamMsg.textContent = `Team "${resp.team.name}" created for ${CURRENT_VIEWER}.`;
+          createTeamMsg.className = "notice ok";
+          createTeamMsg.classList.remove("hidden");
+          teamNameInput.value = "";
+          await refreshTeams();
+          refreshTeamsUI();
+          tabManage.click();
+        } catch (e) {
+          createTeamMsg.textContent = "Create failed: " + e.message;
+          createTeamMsg.className = "notice err";
+          createTeamMsg.classList.remove("hidden");
+        }
+      }
+      /* ========= TEAM DETAIL + PROFILE ========= */
+
+      /* ========= TEAM DETAIL + PROFILE ========= */
+      function findRowByIndex(idx) {
+        const n = String(idx);
+        return ALL_ROWS.find(
+          (r) => String(r.rowIndex) === n || String(r.RowIndex) === n
+        );
+      }
+      function openPersonDetail(row) {
+        const dn = getDisplayName(row) || "(No name)";
+        const card = document.createElement("div");
+        card.className = "profileCard";
+        const img = document.createElement("img");
+        img.alt = dn + " headshot";
+        const cands = [];
+        if (row.headshot)
+          cands.push(
+            driveLH3(row.headshot),
+            driveThumb(row.headshot),
+            row.headshot
+          );
+        let i = 0;
+        const tryNext = () => {
+          if (i >= cands.length || !cands[i]) return;
+          img.onerror = () => {
+            i++;
+            tryNext();
+          };
+          img.src = cands[i++];
+        };
+        tryNext();
+        card.appendChild(img);
+        const addKV = (k, v) => {
+          const wrap = document.createElement("div");
+          const l = document.createElement("div");
+          l.className = "label";
+          l.textContent = k;
+          const val = document.createElement("div");
+          val.className = "kv";
+          val.textContent = v || "";
+          wrap.appendChild(l);
+          wrap.appendChild(val);
+          card.appendChild(wrap);
+        };
+        const title = document.createElement("div");
+        title.style.fontWeight = "800";
+        title.style.fontSize = "18px";
+        title.textContent = dn;
+        card.appendChild(title);
+        addKV("Country", row.country ?? row.Country ?? "");
+        addKV("Nationality", row._nationality || getNationality(row) || "");
+        addKV("Age", row.age ?? row.Age ?? "");
+        addKV("Ethnicity", row.ethnicity ?? row.Ethnicity ?? "");
+        addKV("Sport", row.sport ?? row.Sport ?? "");
+        addKV("Dance", (row._dance || getDance(row) || "").toUpperCase());
+        addKV(
+          "Languages",
+          getLangs(row)
+            .map((s) => s[0]?.toUpperCase() + s.slice(1))
+            .join(", ")
+        );
+        addKV("Team", row.teamName ?? row.TeamName ?? "");
+        addKV("Row index", row.rowIndex);
+        if (row.mediaLink) {
+          const linkWrap = document.createElement("div");
+          const l = document.createElement("div");
+          l.className = "label";
+          l.textContent = "Media link";
+          const a = document.createElement("a");
+          a.href = row.mediaLink;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          a.textContent = "Open in new tab";
+          linkWrap.appendChild(l);
+          linkWrap.appendChild(a);
+          card.appendChild(linkWrap);
+        }
+        modalBody.innerHTML = "";
+        modalBody.appendChild(card);
+        btnConfirmTeam.style.display = "none";
+        btnCloseModal.textContent = "Close";
+        btnCloseModal.onclick = () => teamModal.classList.remove("show");
+        teamModal.classList.add("show");
+      }
+      async function openTeamDetail(teamId, teamName, color) {
+        let members = [];
+        try {
+          const resp = await apiPost({ op: "getTeamMembers", teamId });
+          members = resp.members || [];
+        } catch (e) {
+          showNotice("Load team failed: " + e.message, "err");
+          return;
+        }
+        const card = document.createElement("div");
+        card.className = "teamCard";
+        const header = document.createElement("div");
+        header.className = "row";
+        const left = document.createElement("div");
+        const dot = document.createElement("span");
+        dot.className = "colorDot";
+        dot.style.background = color || "#ccc";
+        const title = document.createElement("span");
+        title.textContent = teamName;
+        left.appendChild(dot);
+        left.appendChild(title);
+        const closeBtn = document.createElement("button");
+        closeBtn.className = "btn";
+        closeBtn.textContent = "Close";
+        header.appendChild(left);
+        header.appendChild(closeBtn);
+        card.appendChild(header);
+        const list = document.createElement("div");
+        list.className = "list";
+        if (members.length === 0) {
+          const e = document.createElement("div");
+          e.style.color = "#666";
+          e.textContent = "No people in this team yet.";
+          list.appendChild(e);
+        } else {
+          members.forEach((m) => {
+            const person = findRowByIndex(m.rowIndex) || {
+              name: m.name,
+              rowIndex: m.rowIndex,
+            };
+            const dn = getDisplayName(person) || m.name || "(No name)";
+            const row = document.createElement("div");
+            row.className = "memberRow";
+            const img = document.createElement("img");
+            img.className = "memberThumb";
+            img.alt = dn + " thumb";
+            const thumbs = [];
+            if (person.headshot)
+              thumbs.push(
+                driveThumb(person.headshot),
+                driveLH3(person.headshot),
+                person.headshot
+              );
+            let ti = 0;
+            const nextThumb = () => {
+              if (ti >= thumbs.length || !thumbs[ti]) return;
+              img.onerror = () => {
+                ti++;
+                nextThumb();
+              };
+              img.src = thumbs[ti++];
+            };
+            nextThumb();
+            const name = document.createElement("div");
+            name.className = "memberName";
+            name.textContent = `${dn} (row ${m.rowIndex})`;
+            const rm = document.createElement("button");
+            rm.className = "btn";
+            rm.textContent = "Remove";
+            const openProfile = () => {
+              if (person && person.rowIndex) openPersonDetail(person);
+              else showNotice("No details found for this person.", "warn");
+            };
+            img.style.cursor = "pointer";
+            name.style.cursor = "pointer";
+            img.addEventListener("click", openProfile);
+            name.addEventListener("click", openProfile);
+            rm.addEventListener("click", async (ev) => {
+              ev.stopPropagation();
+              try {
+                await apiPost({
+                  op: "removeFromTeam",
+                  teamId,
+                  rowIndex: m.rowIndex,
+                });
+                openTeamDetail(teamId, teamName, color);
+              } catch (e) {
+                showNotice("Remove failed: " + e.message, "err");
+              }
+            });
+            row.appendChild(img);
+            row.appendChild(name);
+            row.appendChild(rm);
+            list.appendChild(row);
+          });
+        }
+        card.appendChild(list);
+        modalBody.innerHTML = "";
+        modalBody.appendChild(card);
+        btnConfirmTeam.disabled = true;
+        teamModal.classList.add("show");
+        closeBtn.addEventListener("click", () =>
+          teamModal.classList.remove("show")
+        );
+      }
+
+      /* ========= TEAM PICKER ========= */
+      function groupTeamsForPicker(list) {
+        const roys = [];
+        const savs = [];
+        (list || []).forEach((t) => {
+          const owner = String(t.owner || "").toLowerCase();
+          if (owner === "roy") roys.push(t);
+          else if (owner === "savanah") savs.push(t);
+        });
+        return { roys, savs };
+      }
+
+      function pickerSection(label) {
+        const h = document.createElement("div");
+        h.style.fontWeight = "700";
+        h.style.fontSize = "13px";
+        h.style.margin = "6px 0 2px";
+        h.textContent = label;
+        return h;
+      }
+
+      function pickerItem(t, onChoose) {
+        const item = document.createElement("div");
+        item.className = "item";
+        item.tabIndex = 0;
+
+        const left = document.createElement("span");
+        const dot = document.createElement("span");
+        dot.className = "colorDot";
+        dot.style.background = t.color || "#ccc";
+        const name = document.createElement("span");
+        name.textContent = t.name;
+
+        left.appendChild(dot);
+        left.appendChild(name);
+
+        const count = document.createElement("small");
+        count.style.color = "#666";
+        count.textContent = `${t.memberCount ?? 0} member${
+          (t.memberCount ?? 0) === 1 ? "" : "s"
+        }`;
+
+        item.appendChild(left);
+        item.appendChild(count);
+
+        const choose = () => onChoose(item, t);
+        item.addEventListener("click", choose);
+        item.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            choose();
+          }
+        });
+
+        return item;
+      }
+
+      function openTeamPicker(rowIndex, talentName) {
+        (async () => {
+          if (
+            !Array.isArray(TEAMS) ||
+            !TEAMS.length ||
+            !TEAMS._allOwnersLoaded
+          ) {
+            try {
+              setLoaderText();
+              showLoader();
+              await ensureTeamsLoaded();
+            } finally {
+              setLoaderText();
+              hideLoader();
+            }
+          }
+
+          PICK = { rowIndex, name: talentName, selectedTeamId: null };
+
+          const box = document.createElement("div");
+          box.className = "teamPick";
+
+          const { roys, savs } = groupTeamsForPicker(TEAMS);
+          const viewer = String(CURRENT_VIEWER || "").toLowerCase();
+          const isRoy = viewer === "roy";
+
+          // Order: other owner's teams first, then your teams.
+          const firstList = isRoy ? savs : roys;
+          const firstLabel = isRoy ? "Savanah's teams" : "Roy's teams";
+          const secondList = isRoy ? roys : savs;
+          const secondLabel = isRoy ? "Roy's teams" : "Savanah's teams";
+
+          const addSection = (label, list) => {
+            if (!list.length) return;
+            const h = document.createElement("div");
+            h.style.fontWeight = "800";
+            h.style.fontSize = "13px";
+            h.style.margin = "10px 0 6px";
+            h.textContent = label;
+            box.appendChild(h);
+
+            list.forEach((t) => {
+              const item = document.createElement("div");
+              item.className = "item";
+              item.tabIndex = 0;
+
+              const left = document.createElement("span");
+              const dot = document.createElement("span");
+              dot.className = "colorDot";
+              dot.style.background = t.color || "#ccc";
+              const name = document.createElement("span");
+              name.textContent = t.name;
+
+              left.appendChild(dot);
+              left.appendChild(name);
+
+              const count = document.createElement("small");
+              count.style.color = "#666";
+              count.textContent = `${t.memberCount ?? 0} member${
+                (t.memberCount ?? 0) === 1 ? "" : "s"
+              }`;
+
+              item.appendChild(left);
+              item.appendChild(count);
+
+              const choose = () => {
+                [...box.querySelectorAll(".item")].forEach((x) =>
+                  x.classList.remove("selected")
+                );
+                item.classList.add("selected");
+                PICK.selectedTeamId = t.teamId;
+                btnConfirmTeam.disabled = false;
+              };
+
+              item.addEventListener("click", choose);
+              item.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  choose();
+                }
+              });
+
+              box.appendChild(item);
+            });
+          };
+
+          if (!firstList.length && !secondList.length) {
+            const p = document.createElement("p");
+            p.textContent = "No teams yet. Create one in the Teams tab.";
+            box.appendChild(p);
+          } else {
+            addSection(firstLabel, firstList);
+            addSection(secondLabel, secondList);
+          }
+
+          modalBody.innerHTML = "";
+          modalBody.appendChild(box);
+
+          btnConfirmTeam.style.display = "inline-block";
+          btnConfirmTeam.disabled = !PICK.selectedTeamId;
+          btnConfirmTeam.onclick = confirmAddToTeam;
+
+          btnCloseModal.textContent = "Close";
+          btnCloseModal.onclick = () => teamModal.classList.remove("show");
+
+          teamModal.classList.add("show");
+        })();
+      }
+
+      async function confirmAddToTeam() {
+        if (!PICK.selectedTeamId || !PICK.rowIndex) return;
+        await withLoader("", async () => {
+          await apiPost({
+            op: "addToTeam",
+            teamId: PICK.selectedTeamId,
+            rowIndex: PICK.rowIndex,
+            name: PICK.name,
+          });
+          await refreshTeams();
+        });
+        teamModal.classList.remove("show");
+        showNotice(`Added "${PICK.name}" to team.`, "ok");
+      }
+    </script>
+    </script>
+
+    <!-- Image full-view overlay (click any profile image) -->
+    <style>
+      .img-zoomed {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 999999;
+        cursor: zoom-out;
+      }
+      .img-zoomed img {
+        max-width: 92vw;
+        max-height: 92vh;
+        border-radius: 10px;
+        box-shadow: 0 10px 24px rgba(0,0,0,.4);
+      }
+    </style>
+    <script>
+      // Open full image when clicking any profile/talent image
+      document.addEventListener("click", function (e) {
+        const img = e.target.closest(".card img, .profileCard img");
+        if (!img) return;
+    
+        // Prefer the original source if we added a cache-busting ts param
+        const fullSrc = (img.dataset.full) ? img.dataset.full : img.src.replace(/(\?ts=\d+)?$/, "");
+    
+        const overlay = document.createElement("div");
+        overlay.className = "img-zoomed";
+        overlay.innerHTML = `<img src="${fullSrc}" alt="">`;
+    
+        // Close on click (anywhere)
+        overlay.addEventListener("click", () => overlay.remove());
+    
+        document.body.appendChild(overlay);
+      });
+    </script>
+    
+    </body>
+    </html>
+  </body>
+</html>
