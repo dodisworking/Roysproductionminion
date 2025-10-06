@@ -2238,14 +2238,13 @@
   });
   // close when clicking outside this card
  // Close notes only if the click is truly outside both the card and the popover
+// Close notes only when clicking truly outside (bubble phase, no capture)
 document.addEventListener("click", (e) => {
   if (!pop) return;
-  const clickedInsidePopover = pop.contains(e.target);
-  const clickedInsideCard = wrap.contains(e.target);
-  if (!clickedInsidePopover && !clickedInsideCard) {
-    closeNote();
-  }
-}, { capture: true });
+  if (pop.contains(e.target) || wrap.contains(e.target)) return;
+  closeNote();
+});
+
 
 
   card.appendChild(body);
