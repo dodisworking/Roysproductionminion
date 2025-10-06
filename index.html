@@ -872,7 +872,7 @@
     <script>
       /* ========= CONFIG ========= */
       const API_URL =
-        "https://script.google.com/macros/s/AKfycbztiiXdDCUyGCV7Dfr8M3V48Rnm72AO1TX1qHz7QPYrG78dXL8tWnJmoZnQlnwAiBZk7A/exec";
+        "https://script.google.com/macros/s/AKfycbzjGO1MdYk4sprzEfRwjPJGLkWJkiASkRiQ8hGZdnUbRjjGF70L0FymZbJejJH_F4eXHA/exec";
       const ROY_LINK =
         "https://drive.google.com/file/d/1zz6PR7_aXpVCfLZWjZisPorI7axxA9Dk/view?usp=sharing";
       const SAV_LINK =
@@ -1978,148 +1978,248 @@
       }
 
       function renderCard(row) {
-        const displayName = getDisplayName(row) || "(No name)";
-        const {
-          country = "",
-          age = "",
-          ethnicity = "",
-          sport = "",
-          mediaLink = "",
-          headshot = "",
-          rowIndex,
-        } = row || {};
-        const nat = row._nationality || getNationality(row);
-        const dance = row._dance || getDance(row);
+  const displayName = getDisplayName(row) || "(No name)";
+  const {
+    country = "",
+    age = "",
+    ethnicity = "",
+    sport = "",
+    mediaLink = "",
+    headshot = "",
+    rowIndex,
+  } = row || {};
+  const nat = row._nationality || getNationality(row);
+  const dance = row._dance || getDance(row); // still used for filtering, not shown
 
-        const wrap = document.createElement("div");
-        wrap.className = "cardWrap";
-        const card = document.createElement("article");
-        card.className = "card";
+  const wrap = document.createElement("div");
+  wrap.className = "cardWrap";
+  const card = document.createElement("article");
+  card.className = "card";
 
-        const img = document.createElement("img");
-        img.loading = "lazy";
-        img.alt = displayName ? `${displayName} headshot` : "Headshot";
-        img.referrerPolicy = "no-referrer";
-        const cands = [];
-        if (headshot)
-          cands.push(driveLH3(headshot), driveThumb(headshot), headshot);
-        const withTS = (u) =>
-          u ? u + (u.includes("?") ? "&" : "?") + "ts=" + Date.now() : u;
-        let i = 0;
-        const tryNext = () => {
-          if (i >= cands.length || !cands[i]) {
-            img.src =
-              "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAGQCAQAAABh1i0bAAAAAElFTkSuQmCC";
-            img.style.background = "#f3f3f3";
-            return;
-          }
-          img.onerror = tryNext;
-          img.src = withTS(cands[i++]);
-        };
-        tryNext();
-        card.appendChild(img);
+  const img = document.createElement("img");
+  img.loading = "lazy";
+  img.alt = displayName ? `${displayName} headshot` : "Headshot";
+  img.referrerPolicy = "no-referrer";
+  const cands = [];
+  if (headshot) cands.push(driveLH3(headshot), driveThumb(headshot), headshot);
+  const withTS = (u) => (u ? u + (u.includes("?") ? "&" : "?") + "ts=" + Date.now() : u);
+  let i = 0;
+  const tryNext = () => {
+    if (i >= cands.length || !cands[i]) {
+      img.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAGQCAQAAABh1i0bAAAAAElFTkSuQmCC";
+      img.style.background = "#f3f3f3";
+      return;
+    }
+    img.onerror = tryNext;
+    img.src = withTS(cands[i++]);
+  };
+  tryNext();
+  card.appendChild(img);
 
-        const body = document.createElement("div");
-        body.className = "card-body";
+  const body = document.createElement("div");
+  body.className = "card-body";
 
-        const nameRow = document.createElement("div");
-        nameRow.className = "name-row";
-        const nameEl = document.createElement("div");
-        nameEl.className = "name";
-        if (mediaLink) {
-          // Always use column I for the profile link (fallback to mediaLink if I is empty)
-          const rawLink = (row && (row.I ?? row.i)) ?? mediaLink ?? "";
-          let link = String(rawLink || "").trim();
+  const nameRow = document.createElement("div");
+  nameRow.className = "name-row";
+  const nameEl = document.createElement("div");
+  nameEl.className = "name";
+  if (mediaLink) {
+    const rawLink = (row && (row.I ?? row.i)) ?? mediaLink ?? "";
+    let link = String(rawLink || "").trim();
+    if (link && /^www\./i.test(link)) link = "https://" + link;
+    if (link && !/^https?:\/\//i.test(link) && /^[A-Za-z0-9.-]+\.[A-Za-z]{2,}([/?#].*)?$/.test(link)) {
+      link = "https://" + link;
+    }
+    const hasLink = !!(link && /^https?:\/\//i.test(link));
+    if (hasLink) {
+      const a = document.createElement("a");
+      a.href = link;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.textContent = displayName;
+      nameEl.appendChild(a);
+    } else {
+      nameEl.textContent = displayName;
+    }
+  } else {
+    nameEl.textContent = displayName;
+  }
+  nameRow.appendChild(nameEl);
 
-          // Normalize common paste cases (e.g., "www.example.com")
-          if (link && /^www\./i.test(link)) link = "https://" + link;
-          // If it looks like a domain but no protocol, add https
-          if (
-            link &&
-            !/^https?:\/\//i.test(link) &&
-            /^[A-Za-z0-9.-]+\.[A-Za-z]{2,}([/?#].*)?$/.test(link)
-          ) {
-            link = "https://" + link;
-          }
+  const sendBtn = document.createElement("button");
+  sendBtn.className = "btn";
+  sendBtn.textContent = "Send to team";
+  sendBtn.addEventListener("click", () => openTeamPicker(rowIndex, displayName));
+  nameRow.appendChild(sendBtn);
 
-          const hasLink = !!(link && /^https?:\/\//i.test(link));
+  body.appendChild(nameRow);
+  body.appendChild(kv("Country", country));
+  body.appendChild(kv("Nationality", nat));
+  body.appendChild(kv("Age", age));
+  body.appendChild(kv("Ethnicity", ethnicity));
+  body.appendChild(kv("Sport", sport));
 
-          if (hasLink) {
-            const a = document.createElement("a");
-            a.href = link;
-            a.target = "_blank";
-            a.rel = "noopener noreferrer";
-            a.textContent = displayName;
-            nameEl.appendChild(a);
-          } else {
-            // No usable link found; just render the name as text
-            nameEl.textContent = displayName;
-          }
-        } else {
-          nameEl.textContent = displayName;
-        }
-        nameRow.appendChild(nameEl);
+  // Dance detail intentionally NOT shown (still exists for filtering/search)
+  body.appendChild(
+    kv(
+      "Languages",
+      getLangs(row).map((s) => s[0]?.toUpperCase() + s.slice(1)).join(", ")
+    )
+  );
+  body.appendChild(kv("Team", row.teamName || ""));
 
-        const sendBtn = document.createElement("button");
-        sendBtn.className = "btn";
-        sendBtn.textContent = "Send to team";
-        sendBtn.addEventListener("click", () =>
-          openTeamPicker(rowIndex, displayName)
-        );
-        nameRow.appendChild(sendBtn);
+  const voteRow = document.createElement("div");
+  voteRow.className = "voteRow";
+  const btnNo = document.createElement("button");
+  btnNo.className = "btn no";
+  btnNo.textContent = "No";
+  const btnYes = document.createElement("button");
+  btnYes.className = "btn yes";
+  btnYes.textContent = "Yes";
+  const current = votes[rowIndex] || row.vote || "";
+  if (current === "Yes") btnYes.classList.add("selected");
+  if (current === "No") btnNo.classList.add("selected");
+  btnNo.addEventListener("click", () =>
+    handleVoteClick(rowIndex, "No", wrap, btnYes, btnNo)
+  );
+  btnYes.addEventListener("click", () =>
+    handleVoteClick(rowIndex, "Yes", wrap, btnYes, btnNo)
+  );
+  voteRow.appendChild(btnNo);
+  voteRow.appendChild(btnYes);
+  body.appendChild(voteRow);
 
-        body.appendChild(nameRow);
-        body.appendChild(kv("Country", country));
-        body.appendChild(kv("Nationality", nat));
-        body.appendChild(kv("Age", age));
-        body.appendChild(kv("Ethnicity", ethnicity));
-        body.appendChild(kv("Sport", sport));
+  // ---------- NOTES: bottom-right icon + popover (inline styles = no CSS edits) ----------
+  const noteBtn = document.createElement("button");
+  noteBtn.title = "Notes";
+  noteBtn.setAttribute("aria-label", "Notes");
+  noteBtn.style.position = "absolute";
+  noteBtn.style.right = "10px";
+  noteBtn.style.bottom = "10px";
+  noteBtn.style.width = "36px";
+  noteBtn.style.height = "36px";
+  noteBtn.style.borderRadius = "999px";
+  noteBtn.style.border = "1px solid var(--border)";
+  noteBtn.style.background = "#fff";
+  noteBtn.style.display = "grid";
+  noteBtn.style.placeItems = "center";
+  noteBtn.style.cursor = "pointer";
+  noteBtn.style.boxShadow = "0 4px 10px rgba(0,0,0,.06)";
+  noteBtn.innerHTML = `
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M5 4h9l5 5v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5c0-.55.45-1 1-1Z" stroke="#666" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M14 4v5h5" stroke="#666" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M8 13h8M8 17h6" stroke="#666" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  `;
 
-      
+  const existingNote = (CURRENT_VIEWER === "Savanah"
+    ? (row.P ?? row.p ?? row.savNote ?? "")
+    : (row.O ?? row.o ?? row.royNote ?? "")
+  ) || "";
 
-        body.appendChild(
-          kv(
-            "Languages",
-            getLangs(row)
-              .map((s) => s[0]?.toUpperCase() + s.slice(1))
-              .join(", ")
-          )
-        );
-        body.appendChild(kv("Team", row.teamName || ""));
+  let pop = null;
+  function openNote() {
+    if (pop) return;
+    pop = document.createElement("div");
+    pop.style.position = "absolute";
+    pop.style.right = "10px";
+    pop.style.bottom = "56px";
+    pop.style.width = "min(280px, 90vw)";
+    pop.style.background = "#fff";
+    pop.style.border = "1px solid var(--border)";
+    pop.style.borderRadius = "12px";
+    pop.style.padding = "10px";
+    pop.style.boxShadow = "0 12px 24px rgba(0,0,0,.12)";
+    pop.style.display = "grid";
+    pop.style.gap = "8px";
+    pop.style.zIndex = "20";
+    pop.innerHTML = `
+      <div class="label">Notes for ${CURRENT_VIEWER}</div>
+      <textarea style="width:100%;min-height:90px;resize:vertical;border:1px solid var(--border);border-radius:8px;padding:8px;font-size:14px;">${existingNote ? String(existingNote).replace(/</g,"&lt;") : ""}</textarea>
+      <div style="display:flex;justify-content:flex-end;gap:8px">
+        <button type="button" class="btn" data-act="close">Close</button>
+        <button type="button" class="btn primary" data-act="save">Save</button>
+      </div>
+    `;
+    wrap.appendChild(pop);
 
-        const voteRow = document.createElement("div");
-        voteRow.className = "voteRow";
-        const btnNo = document.createElement("button");
-        btnNo.className = "btn no";
-        btnNo.textContent = "No";
-        const btnYes = document.createElement("button");
-        btnYes.className = "btn yes";
-        btnYes.textContent = "Yes";
-        const current = votes[rowIndex] || row.vote || "";
-        if (current === "Yes") btnYes.classList.add("selected");
-        if (current === "No") btnNo.classList.add("selected");
-        btnNo.addEventListener("click", () =>
-          handleVoteClick(rowIndex, "No", wrap, btnYes, btnNo)
-        );
-        btnYes.addEventListener("click", () =>
-          handleVoteClick(rowIndex, "Yes", wrap, btnYes, btnNo)
-        );
-        voteRow.appendChild(btnNo);
-        voteRow.appendChild(btnYes);
-        body.appendChild(voteRow);
+    // --- simple refresh to load latest note from Sheets ---
+(async () => {
+  try {
+    const res = await apiPost({ op: "getNote", rowIndex, viewer: CURRENT_VIEWER });
+    if (res && res.note !== undefined) {
+      const ta = pop.querySelector("textarea");
+      if (ta) ta.value = String(res.note);
+      if (CURRENT_VIEWER === "Savanah") row.P = res.note; else row.O = res.note;
+    }
+  } catch (e) {
+    console.warn("getNote refresh failed:", e);
+  }
+})();
 
-        card.appendChild(body);
-        wrap.appendChild(card);
+    // Refresh the textarea with the latest value from Sheets (non-blocking)
+(async () => {
+  try {
+    const res = await apiPost({ op: "getNote", rowIndex, viewer: CURRENT_VIEWER });
+    if (res && res.note !== undefined) {
+      const ta = pop.querySelector("textarea");
+      if (ta) ta.value = String(res.note);
+      // keep local cache in sync so next open shows this
+      if (CURRENT_VIEWER === "Savanah") row.P = res.note; else row.O = res.note;
+    }
+  } catch (e) {
+    // ignore errors; the local value is already shown
+    console.warn("getNote refresh failed:", e);
+  }
+})();
 
-        const vbadge = votes[rowIndex] || row.vote;
-        if (vbadge === "Yes" || vbadge === "No") {
-          const badge = document.createElement("div");
-          badge.className = "badge";
-          badge.textContent = vbadge === "Yes" ? "Voted Yes" : "Voted No";
-          wrap.appendChild(badge);
-        }
-        return wrap;
+
+    pop.querySelector('[data-act="close"]').addEventListener("click", closeNote);
+    pop.querySelector('[data-act="save"]').addEventListener("click", async () => {
+      const val = pop.querySelector("textarea").value || "";
+      try {
+        // server chooses column O (Roy) or P (Savanah) based on CURRENT_VIEWER
+        const payload = { op: "saveNote", rowIndex, viewer: CURRENT_VIEWER, note: val };
+        await apiPost(payload);
+        showNotice("Note saved.", "ok");
+        if (CURRENT_VIEWER === "Savanah") row.P = val; else row.O = val;
+        closeNote();
+      } catch (e) {
+        showNotice("Save note failed: " + e.message, "err");
       }
+    });
+  }
+  function closeNote() {
+    if (!pop) return;
+    pop.remove();
+    pop = null;
+  }
+  noteBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (pop) closeNote(); else openNote();
+  });
+  // close when clicking outside this card
+  document.addEventListener("click", (e) => {
+    if (!pop) return;
+    if (!wrap.contains(e.target)) closeNote();
+  }, { capture: true });
+
+  card.appendChild(body);
+  wrap.appendChild(card);
+  wrap.appendChild(noteBtn);
+  // ---------- END NOTES ----------
+
+  const vbadge = votes[rowIndex] || row.vote;
+  if (vbadge === "Yes" || vbadge === "No") {
+    const badge = document.createElement("div");
+    badge.className = "badge";
+    badge.textContent = vbadge === "Yes" ? "Voted Yes" : "Voted No";
+    wrap.appendChild(badge);
+  }
+  return wrap;
+}
+
 
       /* ========= VOTING ========= */
       async function handleVoteClick(
@@ -2492,110 +2592,127 @@
         teamModal.classList.add("show");
       }
       async function openTeamDetail(teamId, teamName, color) {
-        let members = [];
+  // 1) Load members
+  let members = [];
+  try {
+    const resp = await apiPost({ op: "getTeamMembers", teamId });
+    members = Array.isArray(resp.members) ? resp.members : [];
+  } catch (e) {
+    showNotice("Load team failed: " + e.message, "err");
+    return;
+  }
+
+  // 2) Ensure a dedicated page exists (separate from the modal & manage list)
+  let detailPage = document.getElementById("pageTeamDetail");
+  if (!detailPage) {
+    detailPage = document.createElement("div");
+    detailPage.id = "pageTeamDetail";
+    const mainEl = document.querySelector("main") || document.body;
+    mainEl.appendChild(detailPage);
+  }
+  detailPage.innerHTML = "";
+
+  // 3) Header (team name + color + back button)
+  const header = document.createElement("section");
+  header.className = "intro";
+  header.style.borderTop = `8px solid ${color || "#ccc"}`;
+  header.style.position = "relative";
+
+  const row = document.createElement("div");
+  row.className = "row wrap";
+
+  const title = document.createElement("div");
+  title.style.fontWeight = "800";
+  title.style.fontSize = "20px";
+  title.textContent = teamName || "Untitled team";
+
+  const count = document.createElement("div");
+  count.style.color = "var(--muted)";
+  count.style.fontSize = "13px";
+  count.textContent = `(${members.length} member${members.length === 1 ? "" : "s"})`;
+
+  const colorPill = document.createElement("span");
+  colorPill.className = "pill";
+  colorPill.style.display = "inline-flex";
+  colorPill.style.alignItems = "center";
+  colorPill.style.gap = "8px";
+  const dot = document.createElement("span");
+  dot.className = "colorDot";
+  dot.style.width = "18px";
+  dot.style.height = "18px";
+  dot.style.background = color || "#ccc";
+  colorPill.appendChild(dot);
+  colorPill.appendChild(document.createTextNode(color || "#ccc"));
+
+  const backBtn = document.createElement("button");
+  backBtn.className = "btn";
+  backBtn.textContent = "See all teams";
+  backBtn.onclick = () => {
+    detailPage.classList.add("hidden");
+    showTeams();        // show Teams page
+    tabManage.click();  // ensure the Manage tab is active
+    window.scrollTo({ top: 0 });
+  };
+
+  row.appendChild(title);
+  row.appendChild(count);
+  row.appendChild(colorPill);
+  row.appendChild(backBtn);
+  header.appendChild(row);
+  detailPage.appendChild(header);
+
+  // 4) Grid of member cards – EXACT same look as Talent page
+  const grid = document.createElement("div");
+  grid.className = "cards";
+
+  if (!members.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "No talent in this team yet.";
+    grid.appendChild(empty);
+  } else {
+    const frag = document.createDocumentFragment();
+    members.forEach((m) => {
+      const person = findRowByIndex(m.rowIndex) || { name: m.name, rowIndex: m.rowIndex };
+      const card = renderCard(person); // reuse the talent card renderer
+
+      // Add a small "Remove" button over the card (top-left)
+      const rm = document.createElement("button");
+      rm.className = "btn";
+      rm.textContent = "Remove";
+      rm.style.position = "absolute";
+      rm.style.top = "8px";
+      rm.style.left = "8px";
+      rm.style.fontSize = "12px";
+      rm.style.padding = "4px 6px";
+      rm.addEventListener("click", async (e) => {
+        e.stopPropagation();
         try {
-          const resp = await apiPost({ op: "getTeamMembers", teamId });
-          members = resp.members || [];
-        } catch (e) {
-          showNotice("Load team failed: " + e.message, "err");
-          return;
+          await apiPost({ op: "removeFromTeam", teamId, rowIndex: person.rowIndex });
+          showNotice("Removed from team.", "ok");
+          // Refresh this same page in place
+          openTeamDetail(teamId, teamName, color);
+        } catch (err) {
+          showNotice("Remove failed: " + err.message, "err");
         }
-        const card = document.createElement("div");
-        card.className = "teamCard";
-        const header = document.createElement("div");
-        header.className = "row";
-        const left = document.createElement("div");
-        const dot = document.createElement("span");
-        dot.className = "colorDot";
-        dot.style.background = color || "#ccc";
-        const title = document.createElement("span");
-        title.textContent = teamName;
-        left.appendChild(dot);
-        left.appendChild(title);
-        const closeBtn = document.createElement("button");
-        closeBtn.className = "btn";
-        closeBtn.textContent = "Close";
-        header.appendChild(left);
-        header.appendChild(closeBtn);
-        card.appendChild(header);
-        const list = document.createElement("div");
-        list.className = "list";
-        if (members.length === 0) {
-          const e = document.createElement("div");
-          e.style.color = "#666";
-          e.textContent = "No people in this team yet.";
-          list.appendChild(e);
-        } else {
-          members.forEach((m) => {
-            const person = findRowByIndex(m.rowIndex) || {
-              name: m.name,
-              rowIndex: m.rowIndex,
-            };
-            const dn = getDisplayName(person) || m.name || "(No name)";
-            const row = document.createElement("div");
-            row.className = "memberRow";
-            const img = document.createElement("img");
-            img.className = "memberThumb";
-            img.alt = dn + " thumb";
-            const thumbs = [];
-            if (person.headshot)
-              thumbs.push(
-                driveThumb(person.headshot),
-                driveLH3(person.headshot),
-                person.headshot
-              );
-            let ti = 0;
-            const nextThumb = () => {
-              if (ti >= thumbs.length || !thumbs[ti]) return;
-              img.onerror = () => {
-                ti++;
-                nextThumb();
-              };
-              img.src = thumbs[ti++];
-            };
-            nextThumb();
-            const name = document.createElement("div");
-            name.className = "memberName";
-            name.textContent = `${dn} (row ${m.rowIndex})`;
-            const rm = document.createElement("button");
-            rm.className = "btn";
-            rm.textContent = "Remove";
-            const openProfile = () => {
-              if (person && person.rowIndex) openPersonDetail(person);
-              else showNotice("No details found for this person.", "warn");
-            };
-            img.style.cursor = "pointer";
-            name.style.cursor = "pointer";
-            img.addEventListener("click", openProfile);
-            name.addEventListener("click", openProfile);
-            rm.addEventListener("click", async (ev) => {
-              ev.stopPropagation();
-              try {
-                await apiPost({
-                  op: "removeFromTeam",
-                  teamId,
-                  rowIndex: m.rowIndex,
-                });
-                openTeamDetail(teamId, teamName, color);
-              } catch (e) {
-                showNotice("Remove failed: " + e.message, "err");
-              }
-            });
-            row.appendChild(img);
-            row.appendChild(name);
-            row.appendChild(rm);
-            list.appendChild(row);
-          });
-        }
-        card.appendChild(list);
-        modalBody.innerHTML = "";
-        modalBody.appendChild(card);
-        btnConfirmTeam.disabled = true;
-        teamModal.classList.add("show");
-        closeBtn.addEventListener("click", () =>
-          teamModal.classList.remove("show")
-        );
-      }
+      });
+      card.appendChild(rm);
+
+      frag.appendChild(card);
+    });
+    grid.appendChild(frag);
+  }
+
+  detailPage.appendChild(grid);
+
+  // 5) Show/hide pages to make this a dedicated view
+  intro.classList.add("hidden");
+  pageTalent.classList.add("hidden");
+  pageTeams.classList.add("hidden");
+  detailPage.classList.remove("hidden");
+  window.scrollTo({ top: 0 });
+}
+
 
       /* ========= TEAM PICKER ========= */
       function groupTeamsForPicker(list) {
